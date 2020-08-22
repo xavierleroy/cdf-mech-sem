@@ -115,7 +115,7 @@ Definition infseq (a: A) : Prop :=
   exists X: A -> Prop,
   X a /\ (forall a1, X a1 -> exists a2, R a1 a2 /\ X a2).
 
-(** This definition is eseentially a coinduction principle.
+(** This definition is essentially a coinduction principle.
   Let us show some expected properties.  For instance: if relation [R]
   contains a cycle, an infinite sequence exists. *)
 

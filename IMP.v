@@ -123,7 +123,7 @@ Fixpoint aeval (a: aexp) (s: store) : Z :=
 
 End AExp_mul.
 
-(** Why not addd division as well? *)
+(** Why not add division as well? *)
 
 Module AExp_div.
 

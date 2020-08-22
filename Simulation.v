@@ -35,9 +35,9 @@ Hypothesis simulation:
      (plus step2 c2 c2' \/ (star step2 c2 c2' /\ measure c1' < measure c1))
   /\ inv c1' c2'.
 
-(** We first extend the simulation diagram to finite sequences of source transitions.
-    This is the crucial lemma to show semantic preservation when the source program
-    terminates. *)
+(** We first extend the simulation diagram to finite sequences of
+    source transitions.  This is the crucial lemma to show semantic
+    preservation when the source program terminates. *)
 
 Lemma simulation_star:
   forall c1 c1', star step1 c1 c1' ->
@@ -45,9 +45,9 @@ Lemma simulation_star:
   exists c2', star step2 c2 c2' /\ inv c1' c2'.
 Proof.
   induction 1; intros.
-- (* zéro transition *)
+- (* zero transitions *)
   exists c2; split. apply star_refl. auto.
-- (* une ou plusieurs transitions *)
+- (* one or several transitions *)
   destruct (simulation _ _ H _ H1) as (c2' & P & Q).
   destruct (IHstar _ Q) as (c2'' & U & V).
   exists c2''; split. 
@@ -80,13 +80,13 @@ Proof.
   destruct (infseq_inv INF1) as (c1' & STEP1 & INF1').
   destruct (simulation _ _ STEP1 _ INV) as (c2' & P & INV').
   destruct P as [STEPS2 | [STEPS2 MEAS']].
-  + (* une ou plusieurs transitions *)
+  + (* one or several *)
     exists c1'; exists c2'; auto.
-  + (* zéro, une ou plusieurs transitions *)
+  + (* zero, one or several transitions *)
     inversion STEPS2; subst; clear STEPS2.
-    * (* zéro transitions *)
+    * (* zero transitions *)
       eapply IHN; eauto. lia.
-    * (* une ou plusieurs transitions *)
+    * (* one or several transitions *)
       exists c1'; exists c2'; split. eapply plus_left; eauto. auto.
 Qed.
 
