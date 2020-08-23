@@ -68,7 +68,7 @@ Qed.
 
 (** The heap [h] where addresses [l, ..., l + sz - 1] are initialized to 0. *)
 
-Fixpoint hinit (l: location) (sz: nat) (h: heap) : heap :=
+Fixpoint hinit (l: addr) (sz: nat) (h: heap) : heap :=
   match sz with O => h | S sz => hupdate l 0 (hinit (l + 1) sz h) end.
 
 Lemma hinit_inside:
