@@ -768,7 +768,7 @@ Eval compute in (correct_allocation my_alloc Euclidean_division (IdentSet.single
 
 (** Result [false]. *)
 
-(** ** 3.4. Advanced topic: fixed poitns *)
+(** ** 3.4. Advanced topic: fixed points *)
 
 (** The [Fixpoints] library explains how to compute exact fixed points
     (not approximate post-fixed points) using the Knaster-Tarsky theorem. *)

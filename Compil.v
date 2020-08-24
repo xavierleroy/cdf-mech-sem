@@ -527,7 +527,7 @@ Qed.
 (** ** 2.4.  Correctness of generated code for terminating commands *)
 
 (** Assume that command [c], started in state [s], terminates in state [s'].
-    We then wshow that the machine, started at the beginning of the code
+    We then show that the machine, started at the beginning of the code
     [compile_com c] and with initial state [s], performs finitely many
     transitions and reaches the end of the code [compile_com c]
     with state [s'].
@@ -693,7 +693,7 @@ Abort.
     instructions that perform the pending computations described by
     continuation [k], then reach an [Ihalt] instruction to stop cleanly.
 
-    We formalize this intution by the following inductive predicate
+    We formalize this intuition by the following inductive predicate
     [compile_cont C k pc], which states that, starting at program point [pc],
     there are instructions that perform the computations described in [k]
     and reach an [Ihalt] instruction. *)

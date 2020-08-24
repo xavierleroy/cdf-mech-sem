@@ -74,11 +74,11 @@ Theorem aeval_free:
   aeval a s1 = aeval a s2.
 Proof.
   induction a; cbn; intros SAMEFREE.
-- (* Cas a = CONST n *)
+- (* Case a = CONST n *)
   auto.
-- (* Cas a = VAR x *)
+- (* Case a = VAR x *)
   apply SAMEFREE. auto.
-- (* Cas a = PLUS a1 a2 *)
+- (* Case a = PLUS a1 a2 *)
   rewrite IHa1, IHa2; auto.
 - (* Case a = MINUS a1 a2 *)
   rewrite IHa1, IHa2; auto.
