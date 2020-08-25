@@ -20,14 +20,19 @@ Local Open Scope Z_scope.
     a store [s'] where ["x"] has value [s "y"] and ["y"] has value [s
     "x"]. *)
 
-Lemma swap_xy_correct: forall s, exists s', star red (swap_xy, s)
-  (SKIP, s') /\ s' "x" = s "y" /\ s' "y" = s "x".  Proof.
-  intros. econstructor; split.  - eapply star_step. apply
-  red_seq_step. apply red_assign.  eapply star_step. apply
-  red_seq_done.  eapply star_step. apply red_seq_step. apply
-  red_assign.  eapply star_step. apply red_seq_done.  eapply
-  star_step. apply red_assign.  apply star_refl.  - unfold update;
-  cbn. auto.  Qed.
+Lemma swap_xy_correct:
+  forall s, exists s',
+  star red (swap_xy, s) (SKIP, s') /\ s' "x" = s "y" /\ s' "y" = s "x".
+Proof.
+  intros. econstructor; split.
+- eapply star_step. apply red_seq_step. apply red_assign.
+  eapply star_step. apply red_seq_done.
+  eapply star_step. apply red_seq_step. apply red_assign.
+  eapply star_step. apply red_seq_done.
+  eapply star_step. apply red_assign.
+  apply star_refl.
+- unfold update; cbn. auto.
+Qed.
 
 (** The proof script is long but not difficult.  First, we perform a
     "symbolic execution" of the program by chaining reduction steps.

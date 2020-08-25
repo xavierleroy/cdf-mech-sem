@@ -39,8 +39,8 @@
 <span class="kwd">Lemma</span> <span class="id"><a name="u_delay">u_delay</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> {<span class="id">A</span>: <span class="kwd">Type</span>} (<span class="id">x</span>: <span class="id"><a href="CDF.Partiality.html#delay">delay</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>),<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#x">x</a></span> = <span class="kwd">match</span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span> <span class="kwd">with</span> <span class="id"><a href="CDF.Partiality.html#now">now</a></span> <span class="id">v</span> =&gt; <span class="id"><a href="CDF.Partiality.html#now">now</a></span> <span class="id">v</span> | <span class="id"><a href="CDF.Partiality.html#later">later</a></span> <span class="id">y</span> =&gt; <span class="id"><a href="CDF.Partiality.html#later">later</a></span> <span class="id">y</span> <span class="kwd">end</span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof277')">Proof.</div>
-<div class="proofscript" id="proof277">
+<div class="toggleproof" onclick="toggleDisplay('proof278')">Proof.</div>
+<div class="proofscript" id="proof278">
  <span class="tactic">destruct</span> <span class="id">x</span>; <span class="tactic">auto</span>. Qed.</div>
 <br/>
 <span class="kwd">Ltac</span> <span class="id">unroll_delay</span> <span class="id">X</span> := <span class="tactic">rewrite</span> (<span class="id"><a href="CDF.Partiality.html#u_delay">u_delay</a></span> <span class="id">X</span>); <span class="tactic">simpl</span>.<br/>
@@ -63,8 +63,8 @@
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="terminates_unique">terminates_unique</a></span>: <span class="kwd">forall</span> (<span class="id">A</span>: <span class="kwd">Type</span>) (<span class="id">x</span>: <span class="id"><a href="CDF.Partiality.html#delay">delay</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">v1</span> <span class="id">v2</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span>),<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#terminates">terminates</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span> <span class="id"><a href="CDF.Partiality.html#v1">v1</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#terminates">terminates</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span> <span class="id"><a href="CDF.Partiality.html#v2">v2</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#v1">v1</a></span> = <span class="id"><a href="CDF.Partiality.html#v2">v2</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof278')">Proof.</div>
-<div class="proofscript" id="proof278">
+<div class="toggleproof" onclick="toggleDisplay('proof279')">Proof.</div>
+<div class="proofscript" id="proof279">
 &nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">v2</span>; <span class="tactic">intros</span> <span class="id">T</span>; <span class="id">revert</span> <span class="id">x</span> <span class="id">v1</span> <span class="id">T</span> <span class="id">v2</span>. <span class="tactic">induction</span> 1; <span class="tactic">intros</span>.<br/>
 - <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="tactic">auto</span>.<br/>
 - <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="tactic">auto</span>.<br/>
@@ -72,8 +72,8 @@ Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="terminates_diverges_excl">terminates_diverges_excl</a></span>: <span class="kwd">forall</span> (<span class="id">A</span>: <span class="kwd">Type</span>) (<span class="id">x</span>: <span class="id"><a href="CDF.Partiality.html#delay">delay</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">v</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span>),<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#terminates">terminates</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#diverges">diverges</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof279')">Proof.</div>
-<div class="proofscript" id="proof279">
+<div class="toggleproof" onclick="toggleDisplay('proof280')">Proof.</div>
+<div class="proofscript" id="proof280">
 &nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span> <span class="id">D</span>; <span class="tactic">inversion</span> <span class="id">D</span>; <span class="tactic">auto</span>.<br/>
 Qed.</div>
 <br/>
@@ -85,8 +85,8 @@ Qed.</div>
 <span class="kwd">Lemma</span> <span class="id"><a name="remainder_terminates">remainder_terminates</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">a</span> <span class="id">b</span>, <span class="id"><a href="CDF.Partiality.html#b">b</a></span> &gt; 0 -&gt; <br/>
 &nbsp;&nbsp;<span class="id">exists</span> <span class="id">q</span> <span class="id">r</span>, <span class="id"><a href="CDF.Partiality.html#terminates">terminates</a></span> (<span class="id"><a href="CDF.Partiality.html#remainder">remainder</a></span> <span class="id"><a href="CDF.Partiality.html#a">a</a></span> <span class="id"><a href="CDF.Partiality.html#b">b</a></span>) <span class="id"><a href="CDF.Partiality.html#r">r</a></span> /\ <span class="id"><a href="CDF.Partiality.html#r">r</a></span> &lt; <span class="id"><a href="CDF.Partiality.html#b">b</a></span> /\ <span class="id"><a href="CDF.Partiality.html#a">a</a></span> = <span class="id"><a href="CDF.Partiality.html#b">b</a></span> * <span class="id"><a href="CDF.Partiality.html#q">q</a></span> + <span class="id"><a href="CDF.Partiality.html#r">r</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof280')">Proof.</div>
-<div class="proofscript" id="proof280">
+<div class="toggleproof" onclick="toggleDisplay('proof281')">Proof.</div>
+<div class="proofscript" id="proof281">
 &nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">a</span> <span class="kwd">using</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#well_founded_ind">well_founded_ind</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Arith.Wf_nat.html#lt_wf">lt_wf</a></span>). <span class="tactic">intros</span>.<br/>
 &nbsp;&nbsp;<span class="id">unroll_delay</span> (<span class="id"><a href="CDF.Partiality.html#remainder">remainder</a></span> <span class="id">a</span> <span class="id">b</span>). <span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Arith.PeanoNat.html#Nat.ltb_spec">Nat.ltb_spec</a></span> <span class="id">a</span> <span class="id">b</span>).<br/>
 - <span class="id">exists</span> 0, <span class="id">a</span>. <span class="tactic">split</span>. <span class="id">constructor</span>. <span class="tactic">split</span>. <span class="tactic">auto</span>. <span class="id">lia</span>. <br/>
@@ -97,8 +97,8 @@ Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="remainder_diverges">remainder_diverges</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">a</span>, <span class="id"><a href="CDF.Partiality.html#diverges">diverges</a></span> (<span class="id"><a href="CDF.Partiality.html#remainder">remainder</a></span> <span class="id"><a href="CDF.Partiality.html#a">a</a></span> 0).<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof281')">Proof.</div>
-<div class="proofscript" id="proof281">
+<div class="toggleproof" onclick="toggleDisplay('proof282')">Proof.</div>
+<div class="proofscript" id="proof282">
 &nbsp;&nbsp;<span class="id">cofix</span> <span class="id">CIH</span>; <span class="tactic">intros</span> <span class="id">a</span>. <span class="id">unroll_delay</span> (<span class="id"><a href="CDF.Partiality.html#remainder">remainder</a></span> <span class="id">a</span> 0). <span class="id">constructor</span>. <span class="tactic">apply</span> <span class="id">CIH</span>.<br/>
 Qed.</div>
 <br/>
@@ -115,22 +115,22 @@ Qed.</div>
 <span class="kwd">Notation</span> "<span class="id">x</span> == <span class="id">y</span>" := (<span class="id"><a href="CDF.Partiality.html#equi">equi</a></span> <span class="id">x</span> <span class="id">y</span>) (<span class="tactic">at</span> <span class="id">level</span> 70, <span class="id">no</span> <span class="id">associativity</span>).<br/>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="equi_refl">equi_refl</a></span>: <span class="kwd">forall</span> <span class="id">x</span>, <span class="id"><a href="CDF.Partiality.html#x">x</a></span> == <span class="id"><a href="CDF.Partiality.html#x">x</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof282')">Proof.</div>
-<div class="proofscript" id="proof282">
+<div class="toggleproof" onclick="toggleDisplay('proof283')">Proof.</div>
+<div class="proofscript" id="proof283">
 &nbsp;&nbsp;<span class="id">cofix</span> <span class="id">COINDHYP</span>; <span class="tactic">intros</span>; <span class="tactic">destruct</span> <span class="id">x</span>.<br/>
 - <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#equi_terminates">equi_terminates</a></span> <span class="kwd">with</span> <span class="id">a</span>; <span class="id">constructor</span>.<br/>
 - <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#equi_later">equi_later</a></span>. <span class="tactic">apply</span> <span class="id">COINDHYP</span>.<br/>
 Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id">equi_refl</span>': <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span>, <span class="id"><a href="CDF.Partiality.html#x">x</a></span> = <span class="id"><a href="CDF.Partiality.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#x">x</a></span> == <span class="id"><a href="CDF.Partiality.html#y">y</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof283')">Proof.</div>
-<div class="proofscript" id="proof283">
+<div class="toggleproof" onclick="toggleDisplay('proof284')">Proof.</div>
+<div class="proofscript" id="proof284">
 &nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">subst</span>; <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#equi_refl">equi_refl</a></span>.<br/>
 Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="equi_sym">equi_sym</a></span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span>, <span class="id"><a href="CDF.Partiality.html#x">x</a></span> == <span class="id"><a href="CDF.Partiality.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#y">y</a></span> == <span class="id"><a href="CDF.Partiality.html#x">x</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof284')">Proof.</div>
-<div class="proofscript" id="proof284">
+<div class="toggleproof" onclick="toggleDisplay('proof285')">Proof.</div>
+<div class="proofscript" id="proof285">
 &nbsp;&nbsp;<span class="id">cofix</span> <span class="id">COINDHYP</span>; <span class="tactic">intros</span> <span class="id">x</span> <span class="id">y</span> <span class="id">E</span>; <span class="tactic">inversion</span> <span class="id">E</span>; <span class="tactic">subst</span>.<br/>
 - <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#equi_terminates">equi_terminates</a></span> <span class="kwd">with</span> <span class="id">v</span>; <span class="tactic">auto</span>.<br/>
 - <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#equi_later">equi_later</a></span>; <span class="tactic">apply</span> <span class="id">COINDHYP</span>; <span class="tactic">auto</span>.<br/>
@@ -138,8 +138,8 @@ Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="terminates_equi">terminates_equi</a></span>: <br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span> <span class="id">v</span>, <span class="id"><a href="CDF.Partiality.html#terminates">terminates</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span> -&gt; <span class="kwd">forall</span> <span class="id">y</span>, <span class="id"><a href="CDF.Partiality.html#x">x</a></span> == <span class="id"><a href="CDF.Partiality.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#terminates">terminates</a></span> <span class="id"><a href="CDF.Partiality.html#y">y</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof285')">Proof.</div>
-<div class="proofscript" id="proof285">
+<div class="toggleproof" onclick="toggleDisplay('proof286')">Proof.</div>
+<div class="proofscript" id="proof286">
 &nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span> <span class="id">y</span> <span class="id">E</span>; <span class="tactic">inversion</span> <span class="id">E</span>; <span class="tactic">subst</span>.<br/>
 - <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">auto</span>.<br/>
 - <span class="tactic">inversion</span> <span class="id">H0</span>; <span class="tactic">subst</span>. <br/>
@@ -148,8 +148,8 @@ Qed.</div>
 Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="equi_trans">equi_trans</a></span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span> <span class="id">z</span>, <span class="id"><a href="CDF.Partiality.html#x">x</a></span> == <span class="id"><a href="CDF.Partiality.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#y">y</a></span> == <span class="id"><a href="CDF.Partiality.html#z">z</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#x">x</a></span> == <span class="id"><a href="CDF.Partiality.html#z">z</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof286')">Proof.</div>
-<div class="proofscript" id="proof286">
+<div class="toggleproof" onclick="toggleDisplay('proof287')">Proof.</div>
+<div class="proofscript" id="proof287">
 &nbsp;&nbsp;<span class="id">cofix</span> <span class="id">COINDHYP</span>; <span class="tactic">intros</span> <span class="id">x</span> <span class="id">y</span> <span class="id">z</span> <span class="id">E1</span> <span class="id">E2</span>; <span class="tactic">inversion</span> <span class="id">E1</span>; <span class="tactic">subst</span>.<br/>
 - <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#equi_terminates">equi_terminates</a></span> <span class="kwd">with</span> <span class="id">v</span>. <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#terminates_equi">terminates_equi</a></span> <span class="kwd">with</span> <span class="id">y</span>; <span class="tactic">auto</span>.<br/>
 - <span class="tactic">inversion</span> <span class="id">E2</span>; <span class="tactic">subst</span>.<br/>
@@ -159,16 +159,16 @@ Qed.</div>
 Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="eq_later">eq_later</a></span>: <span class="kwd">forall</span> <span class="id">x</span>, <span class="id"><a href="CDF.Partiality.html#later">later</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span> == <span class="id"><a href="CDF.Partiality.html#x">x</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof287')">Proof.</div>
-<div class="proofscript" id="proof287">
+<div class="toggleproof" onclick="toggleDisplay('proof288')">Proof.</div>
+<div class="proofscript" id="proof288">
 &nbsp;&nbsp;<span class="id">cofix</span> <span class="id">COINDHYP</span>; <span class="tactic">intros</span> <span class="id">x</span>. <span class="tactic">destruct</span> <span class="id">x</span>. <br/>
 - <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#equi_terminates">equi_terminates</a></span> <span class="kwd">with</span> <span class="id">a</span>; <span class="tactic">repeat</span> <span class="id">constructor</span>.<br/>
 - <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#equi_later">equi_later</a></span>. <span class="tactic">apply</span> <span class="id">COINDHYP</span>.<br/>
 Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="diverges_equi">diverges_equi</a></span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span>, <span class="id"><a href="CDF.Partiality.html#x">x</a></span> == <span class="id"><a href="CDF.Partiality.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#diverges">diverges</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#diverges">diverges</a></span> <span class="id"><a href="CDF.Partiality.html#y">y</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof288')">Proof.</div>
-<div class="proofscript" id="proof288">
+<div class="toggleproof" onclick="toggleDisplay('proof289')">Proof.</div>
+<div class="proofscript" id="proof289">
 &nbsp;&nbsp;<span class="id">cofix</span> <span class="id">COINDHYP</span>; <span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>.<br/>
 - <span class="tactic">elim</span> (<span class="id"><a href="CDF.Partiality.html#terminates_diverges_excl">terminates_diverges_excl</a></span> <span class="id"><a href="CDF.Partiality.html#EQUITERMINATION.A">A</a></span> <span class="id">x</span> <span class="id">v</span>); <span class="tactic">auto</span>.<br/>
 - <span class="tactic">inversion</span> <span class="id">H0</span>; <span class="tactic">subst</span>. <span class="id">constructor</span>. <span class="tactic">eauto</span>.<br/>
@@ -198,8 +198,8 @@ Qed.</div>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#bisim">bisim</a></span> <span class="id"><a href="CDF.Partiality.html#n">n</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span> <span class="id"><a href="CDF.Partiality.html#y">y</a></span> -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">exists</span> <span class="id">v</span>, <span class="id"><a href="CDF.Partiality.html#terminates">terminates</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span> /\ <span class="id"><a href="CDF.Partiality.html#terminates">terminates</a></span> <span class="id"><a href="CDF.Partiality.html#y">y</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span>)<br/>
 &nbsp;&nbsp;\/ (<span class="id">exists</span> <span class="id">n</span>' <span class="id">x</span>' <span class="id">y</span>', <span class="id"><a href="CDF.Partiality.html#x">x</a></span> = <span class="id"><a href="CDF.Partiality.html#later">later</a></span> <span class="id">x</span>' /\ <span class="id"><a href="CDF.Partiality.html#y">y</a></span> = <span class="id"><a href="CDF.Partiality.html#later">later</a></span> <span class="id">y</span>' /\ <span class="id"><a href="CDF.Partiality.html#bisim">bisim</a></span> <span class="id">n</span>' <span class="id">x</span>' <span class="id">y</span>').<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof289')">Proof.</div>
-<div class="proofscript" id="proof289">
+<div class="toggleproof" onclick="toggleDisplay('proof290')">Proof.</div>
+<div class="proofscript" id="proof290">
 &nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">n</span> <span class="kwd">using</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Arith.Wf_nat.html#lt_wf_ind">lt_wf_ind</a></span>.<br/>
 &nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">x</span> <span class="id">y</span> <span class="id">B</span>; <span class="tactic">inversion</span> <span class="id">B</span>; <span class="tactic">subst</span>.<br/>
 - <span class="id">left</span>; <span class="id">exists</span> <span class="id">v</span>; <span class="tactic">split</span>; <span class="id">constructor</span>.<br/>
@@ -218,8 +218,8 @@ Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="bisim_equi">bisim_equi</a></span>: <span class="kwd">forall</span> <span class="id">n</span> <span class="id">x</span> <span class="id">y</span>,<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#bisim">bisim</a></span> <span class="id"><a href="CDF.Partiality.html#n">n</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span> <span class="id"><a href="CDF.Partiality.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#x">x</a></span> == <span class="id"><a href="CDF.Partiality.html#y">y</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof290')">Proof.</div>
-<div class="proofscript" id="proof290">
+<div class="toggleproof" onclick="toggleDisplay('proof291')">Proof.</div>
+<div class="proofscript" id="proof291">
 &nbsp;&nbsp;<span class="id">cofix</span> <span class="id">CIH</span>; <span class="tactic">intros</span>.<br/>
 &nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Partiality.html#bisim_inv">bisim_inv</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span>)<br/>
 &nbsp;&nbsp;<span class="kwd">as</span> [(<span class="id">v</span> &amp; <span class="id">T1</span> &amp; <span class="id">T2</span>) | (<span class="id">n</span>' &amp; <span class="id">x</span>' &amp; <span class="id">y</span>' &amp; <span class="id">E1</span> &amp; <span class="id">E2</span> &amp; <span class="id">B</span>')].<br/>
@@ -243,29 +243,29 @@ Qed.</div>
 <br/>
 <span class="kwd">Remark</span> <span class="id"><a name="bind_now">bind_now</a></span>: <span class="kwd">forall</span> (<span class="id">A</span> <span class="id">B</span>: <span class="kwd">Type</span>) (<span class="id">v</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">f</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#delay">delay</a></span> <span class="id"><a href="CDF.Partiality.html#B">B</a></span>),<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#bind">bind</a></span> (<span class="id"><a href="CDF.Partiality.html#now">now</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span>) <span class="id"><a href="CDF.Partiality.html#f">f</a></span> = <span class="id"><a href="CDF.Partiality.html#later">later</a></span> (<span class="id"><a href="CDF.Partiality.html#f">f</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span>).<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof291')">Proof.</div>
-<div class="proofscript" id="proof291">
+<div class="toggleproof" onclick="toggleDisplay('proof292')">Proof.</div>
+<div class="proofscript" id="proof292">
  <span class="tactic">intros</span>; <span class="id">samedelay</span>. Qed.</div>
 <br/>
 <span class="kwd">Remark</span> <span class="id"><a name="bind_later">bind_later</a></span>: <span class="kwd">forall</span> (<span class="id">A</span> <span class="id">B</span>: <span class="kwd">Type</span>) (<span class="id">x</span>: <span class="id"><a href="CDF.Partiality.html#delay">delay</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">f</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#delay">delay</a></span> <span class="id"><a href="CDF.Partiality.html#B">B</a></span>),<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#bind">bind</a></span> (<span class="id"><a href="CDF.Partiality.html#later">later</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span>) <span class="id"><a href="CDF.Partiality.html#f">f</a></span> = <span class="id"><a href="CDF.Partiality.html#later">later</a></span> (<span class="id"><a href="CDF.Partiality.html#bind">bind</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span> <span class="id"><a href="CDF.Partiality.html#f">f</a></span>).<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof292')">Proof.</div>
-<div class="proofscript" id="proof292">
+<div class="toggleproof" onclick="toggleDisplay('proof293')">Proof.</div>
+<div class="proofscript" id="proof293">
  <span class="tactic">intros</span>; <span class="id">samedelay</span>. Qed.</div>
 <br/>
 <div class="doc">The three monadic laws hold up to equitermination. </div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="mon_law_1">mon_law_1</a></span>: <span class="kwd">forall</span> (<span class="id">A</span> <span class="id">B</span>: <span class="kwd">Type</span>) (<span class="id">v</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">f</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#delay">delay</a></span> <span class="id"><a href="CDF.Partiality.html#B">B</a></span>),<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#bind">bind</a></span> (<span class="id"><a href="CDF.Partiality.html#now">now</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span>) <span class="id"><a href="CDF.Partiality.html#f">f</a></span> == <span class="id"><a href="CDF.Partiality.html#f">f</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof293')">Proof.</div>
-<div class="proofscript" id="proof293">
+<div class="toggleproof" onclick="toggleDisplay('proof294')">Proof.</div>
+<div class="proofscript" id="proof294">
 &nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id"><a href="CDF.Partiality.html#bind_now">bind_now</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#eq_later">eq_later</a></span>.<br/>
 Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="mon_law_2">mon_law_2</a></span>: <span class="kwd">forall</span> (<span class="id">A</span>: <span class="kwd">Type</span>) (<span class="id">m</span>: <span class="id"><a href="CDF.Partiality.html#delay">delay</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>), <br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#bind">bind</a></span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> (@<span class="id"><a href="CDF.Partiality.html#ret">ret</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) == <span class="id"><a href="CDF.Partiality.html#m">m</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof294')">Proof.</div>
-<div class="proofscript" id="proof294">
+<div class="toggleproof" onclick="toggleDisplay('proof295')">Proof.</div>
+<div class="proofscript" id="proof295">
 &nbsp;&nbsp;<span class="id">cofix</span> <span class="id">CIH</span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">m</span>.<br/>
 - <span class="tactic">rewrite</span> <span class="id"><a href="CDF.Partiality.html#bind_now">bind_now</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#eq_later">eq_later</a></span>. <br/>
 - <span class="tactic">rewrite</span> <span class="id"><a href="CDF.Partiality.html#bind_later">bind_later</a></span>. <span class="id">constructor</span>. <span class="tactic">apply</span> <span class="id">CIH</span>.<br/>
@@ -273,8 +273,8 @@ Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="mon_law_3">mon_law_3</a></span>: <span class="kwd">forall</span> (<span class="id">A</span> <span class="id">B</span> <span class="id">C</span>: <span class="kwd">Type</span>) (<span class="id">m</span>: <span class="id"><a href="CDF.Partiality.html#delay">delay</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">f</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#delay">delay</a></span> <span class="id"><a href="CDF.Partiality.html#B">B</a></span>) (<span class="id">g</span>: <span class="id"><a href="CDF.Partiality.html#B">B</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#delay">delay</a></span> <span class="id"><a href="CDF.Partiality.html#C">C</a></span>),<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#bind">bind</a></span> (<span class="id"><a href="CDF.Partiality.html#bind">bind</a></span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> <span class="id"><a href="CDF.Partiality.html#f">f</a></span>) <span class="id"><a href="CDF.Partiality.html#g">g</a></span> == <span class="id"><a href="CDF.Partiality.html#bind">bind</a></span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id"><a href="CDF.Partiality.html#bind">bind</a></span> (<span class="id"><a href="CDF.Partiality.html#f">f</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span>) <span class="id"><a href="CDF.Partiality.html#g">g</a></span>).<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof295')">Proof.</div>
-<div class="proofscript" id="proof295">
+<div class="toggleproof" onclick="toggleDisplay('proof296')">Proof.</div>
+<div class="proofscript" id="proof296">
 &nbsp;&nbsp;<span class="id">cofix</span> <span class="id">CIH</span>. <span class="tactic">intros</span>; <span class="tactic">destruct</span> <span class="id">m</span>.<br/>
 - <span class="tactic">rewrite</span> ! <span class="id"><a href="CDF.Partiality.html#bind_now">bind_now</a></span>, <span class="id"><a href="CDF.Partiality.html#bind_later">bind_later</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#equi_refl">equi_refl</a></span>.<br/>
 - <span class="tactic">rewrite</span> ! <span class="id"><a href="CDF.Partiality.html#bind_later">bind_later</a></span>. <span class="id">constructor</span>. <span class="tactic">apply</span> <span class="id">CIH</span>.<br/>
@@ -285,8 +285,8 @@ Qed.</div>
 <span class="kwd">Lemma</span> <span class="id"><a name="bind_terminates_l">bind_terminates_l</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">A</span>: <span class="kwd">Type</span>) (<span class="id">m</span>: <span class="id"><a href="CDF.Partiality.html#delay">delay</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">v</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span>), <span class="id"><a href="CDF.Partiality.html#terminates">terminates</a></span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span> -&gt;<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">B</span>: <span class="kwd">Type</span>) (<span class="id">f</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#delay">delay</a></span> <span class="id"><a href="CDF.Partiality.html#B">B</a></span>), <span class="id"><a href="CDF.Partiality.html#bind">bind</a></span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> <span class="id"><a href="CDF.Partiality.html#f">f</a></span> == <span class="id"><a href="CDF.Partiality.html#f">f</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof296')">Proof.</div>
-<div class="proofscript" id="proof296">
+<div class="toggleproof" onclick="toggleDisplay('proof297')">Proof.</div>
+<div class="proofscript" id="proof297">
 &nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span>.<br/>
 - <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#mon_law_1">mon_law_1</a></span>.<br/>
 - <span class="tactic">rewrite</span> <span class="id"><a href="CDF.Partiality.html#bind_later">bind_later</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="CDF.Partiality.html#equi_trans">equi_trans</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#eq_later">eq_later</a></span>. <span class="tactic">apply</span> <span class="id">IHterminates</span>. <br/>
@@ -297,8 +297,8 @@ Qed.</div>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#m1">m1</a></span> == <span class="id"><a href="CDF.Partiality.html#m2">m2</a></span> -&gt;<br/>
 &nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">v</span>, <span class="id"><a href="CDF.Partiality.html#f1">f1</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span> == <span class="id"><a href="CDF.Partiality.html#f2">f2</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span>) -&gt;<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#bind">bind</a></span> <span class="id"><a href="CDF.Partiality.html#m1">m1</a></span> <span class="id"><a href="CDF.Partiality.html#f1">f1</a></span> == <span class="id"><a href="CDF.Partiality.html#bind">bind</a></span> <span class="id"><a href="CDF.Partiality.html#m2">m2</a></span> <span class="id"><a href="CDF.Partiality.html#f2">f2</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof297')">Proof.</div>
-<div class="proofscript" id="proof297">
+<div class="toggleproof" onclick="toggleDisplay('proof298')">Proof.</div>
+<div class="proofscript" id="proof298">
 &nbsp;&nbsp;<span class="id">cofix</span> <span class="id">CIH</span>; <span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>.<br/>
 - <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#equi_trans">equi_trans</a></span> <span class="kwd">with</span> (<span class="id">f1</span> <span class="id">v</span>). <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#bind_terminates_l">bind_terminates_l</a></span>; <span class="tactic">auto</span>.<br/>
 &nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#equi_trans">equi_trans</a></span> <span class="kwd">with</span> (<span class="id">f2</span> <span class="id">v</span>). <span class="tactic">auto</span>.<br/>
@@ -323,8 +323,8 @@ Qed.</div>
 <span class="kwd">Lemma</span> <span class="id"><a name="u_mon">u_mon</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> {<span class="id">A</span>: <span class="kwd">Type</span>} (<span class="id">x</span>: <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>),<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#x">x</a></span> = <span class="kwd">match</span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span> <span class="kwd">with</span> <span class="id"><a href="CDF.Partiality.html#Ret">Ret</a></span> <span class="id">v</span> =&gt; <span class="id"><a href="CDF.Partiality.html#Ret">Ret</a></span> <span class="id">v</span> | <span class="kwd">Bind</span> <span class="id">y</span> <span class="id">f</span> =&gt; <span class="kwd">Bind</span> <span class="id">y</span> <span class="id">f</span> | <span class="id"><a href="CDF.Partiality.html#Later">Later</a></span> <span class="id">m</span> =&gt; <span class="id"><a href="CDF.Partiality.html#Later">Later</a></span> <span class="id">m</span> <span class="kwd">end</span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof298')">Proof.</div>
-<div class="proofscript" id="proof298">
+<div class="toggleproof" onclick="toggleDisplay('proof299')">Proof.</div>
+<div class="proofscript" id="proof299">
  <span class="tactic">destruct</span> <span class="id">x</span>; <span class="tactic">auto</span>. Qed.</div>
 <br/>
 <div class="doc">The semantics of an abstract syntax tree (of type <span class="bracket"><span class="id">mon</span> <span class="id">A</span></span>)
@@ -341,31 +341,31 @@ Qed.</div>
 &nbsp;&nbsp;<span class="kwd">end</span>.<br/>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="run_Ret">run_Ret</a></span>: <span class="kwd">forall</span> (<span class="id">A</span>: <span class="kwd">Type</span>) (<span class="id">v</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span>), <span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="id"><a href="CDF.Partiality.html#Ret">Ret</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span>) = <span class="id"><a href="CDF.Partiality.html#now">now</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof299')">Proof.</div>
-<div class="proofscript" id="proof299">
- <span class="tactic">intros</span>; <span class="id">samedelay</span>. Qed.</div>
-<br/>
-<span class="kwd">Lemma</span> <span class="id"><a name="run_Later">run_Later</a></span>: <span class="kwd">forall</span> (<span class="id">A</span>: <span class="kwd">Type</span>) (<span class="id">m</span>: <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>), <span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="id"><a href="CDF.Partiality.html#Later">Later</a></span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span>) = <span class="id"><a href="CDF.Partiality.html#later">later</a></span> (<span class="id"><a href="CDF.Partiality.html#run">run</a></span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span>).<br/>
 <div class="toggleproof" onclick="toggleDisplay('proof300')">Proof.</div>
 <div class="proofscript" id="proof300">
  <span class="tactic">intros</span>; <span class="id">samedelay</span>. Qed.</div>
 <br/>
-<span class="kwd">Lemma</span> <span class="id"><a name="run_Bind_Ret">run_Bind_Ret</a></span>: <span class="kwd">forall</span> (<span class="id">A</span> <span class="id">B</span>: <span class="kwd">Type</span>) (<span class="id">v</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">f</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#B">B</a></span>),<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> (<span class="id"><a href="CDF.Partiality.html#Ret">Ret</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span>) <span class="id"><a href="CDF.Partiality.html#f">f</a></span>) = <span class="id"><a href="CDF.Partiality.html#later">later</a></span> (<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="id"><a href="CDF.Partiality.html#f">f</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span>)).<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="run_Later">run_Later</a></span>: <span class="kwd">forall</span> (<span class="id">A</span>: <span class="kwd">Type</span>) (<span class="id">m</span>: <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>), <span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="id"><a href="CDF.Partiality.html#Later">Later</a></span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span>) = <span class="id"><a href="CDF.Partiality.html#later">later</a></span> (<span class="id"><a href="CDF.Partiality.html#run">run</a></span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span>).<br/>
 <div class="toggleproof" onclick="toggleDisplay('proof301')">Proof.</div>
 <div class="proofscript" id="proof301">
  <span class="tactic">intros</span>; <span class="id">samedelay</span>. Qed.</div>
 <br/>
-<span class="kwd">Lemma</span> <span class="id"><a name="run_Bind_Later">run_Bind_Later</a></span>: <span class="kwd">forall</span> (<span class="id">A</span> <span class="id">B</span>: <span class="kwd">Type</span>) (<span class="id">m</span>: <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">f</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#B">B</a></span>),<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> (<span class="id"><a href="CDF.Partiality.html#Later">Later</a></span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span>) <span class="id"><a href="CDF.Partiality.html#f">f</a></span>) = <span class="id"><a href="CDF.Partiality.html#later">later</a></span> (<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> <span class="id"><a href="CDF.Partiality.html#f">f</a></span>)).<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="run_Bind_Ret">run_Bind_Ret</a></span>: <span class="kwd">forall</span> (<span class="id">A</span> <span class="id">B</span>: <span class="kwd">Type</span>) (<span class="id">v</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">f</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#B">B</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> (<span class="id"><a href="CDF.Partiality.html#Ret">Ret</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span>) <span class="id"><a href="CDF.Partiality.html#f">f</a></span>) = <span class="id"><a href="CDF.Partiality.html#later">later</a></span> (<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="id"><a href="CDF.Partiality.html#f">f</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span>)).<br/>
 <div class="toggleproof" onclick="toggleDisplay('proof302')">Proof.</div>
 <div class="proofscript" id="proof302">
  <span class="tactic">intros</span>; <span class="id">samedelay</span>. Qed.</div>
 <br/>
-<span class="kwd">Lemma</span> <span class="id"><a name="run_Bind_Bind">run_Bind_Bind</a></span>: <span class="kwd">forall</span> (<span class="id">A</span> <span class="id">B</span> <span class="id">C</span>: <span class="kwd">Type</span>) (<span class="id">m</span>: <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">f</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#B">B</a></span>) (<span class="id">g</span>: <span class="id"><a href="CDF.Partiality.html#B">B</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#C">C</a></span>),<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> (<span class="kwd">Bind</span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> <span class="id"><a href="CDF.Partiality.html#f">f</a></span>) <span class="id"><a href="CDF.Partiality.html#g">g</a></span>) = <span class="id"><a href="CDF.Partiality.html#later">later</a></span> (<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="kwd">Bind</span> (<span class="id"><a href="CDF.Partiality.html#f">f</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span>) <span class="id"><a href="CDF.Partiality.html#g">g</a></span>))).<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="run_Bind_Later">run_Bind_Later</a></span>: <span class="kwd">forall</span> (<span class="id">A</span> <span class="id">B</span>: <span class="kwd">Type</span>) (<span class="id">m</span>: <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">f</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#B">B</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> (<span class="id"><a href="CDF.Partiality.html#Later">Later</a></span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span>) <span class="id"><a href="CDF.Partiality.html#f">f</a></span>) = <span class="id"><a href="CDF.Partiality.html#later">later</a></span> (<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> <span class="id"><a href="CDF.Partiality.html#f">f</a></span>)).<br/>
 <div class="toggleproof" onclick="toggleDisplay('proof303')">Proof.</div>
 <div class="proofscript" id="proof303">
+ <span class="tactic">intros</span>; <span class="id">samedelay</span>. Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="run_Bind_Bind">run_Bind_Bind</a></span>: <span class="kwd">forall</span> (<span class="id">A</span> <span class="id">B</span> <span class="id">C</span>: <span class="kwd">Type</span>) (<span class="id">m</span>: <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">f</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#B">B</a></span>) (<span class="id">g</span>: <span class="id"><a href="CDF.Partiality.html#B">B</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#C">C</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> (<span class="kwd">Bind</span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> <span class="id"><a href="CDF.Partiality.html#f">f</a></span>) <span class="id"><a href="CDF.Partiality.html#g">g</a></span>) = <span class="id"><a href="CDF.Partiality.html#later">later</a></span> (<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="kwd">Bind</span> (<span class="id"><a href="CDF.Partiality.html#f">f</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span>) <span class="id"><a href="CDF.Partiality.html#g">g</a></span>))).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof304')">Proof.</div>
+<div class="proofscript" id="proof304">
  <span class="tactic">intros</span>; <span class="id">samedelay</span>. Qed.</div>
 <br/>
 <div class="doc">Some of our proofs use continuations, which can also be viewed as
@@ -388,15 +388,15 @@ Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="Mon_law_1">Mon_law_1</a></span>: <span class="kwd">forall</span> (<span class="id">A</span> <span class="id">B</span>: <span class="kwd">Type</span>) (<span class="id">v</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">f</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#B">B</a></span>),<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> (<span class="id"><a href="CDF.Partiality.html#Ret">Ret</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span>) <span class="id"><a href="CDF.Partiality.html#f">f</a></span>) == <span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="id"><a href="CDF.Partiality.html#f">f</a></span> <span class="id"><a href="CDF.Partiality.html#v">v</a></span>).<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof304')">Proof.</div>
-<div class="proofscript" id="proof304">
+<div class="toggleproof" onclick="toggleDisplay('proof305')">Proof.</div>
+<div class="proofscript" id="proof305">
 &nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id"><a href="CDF.Partiality.html#run_Bind_Ret">run_Bind_Ret</a></span>; <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#eq_later">eq_later</a></span>. <br/>
 Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="Mon_law_3">Mon_law_3</a></span>: <span class="kwd">forall</span> (<span class="id">A</span> <span class="id">B</span> <span class="id">C</span>: <span class="kwd">Type</span>) (<span class="id">m</span>: <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">f</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#B">B</a></span>) (<span class="id">g</span>: <span class="id"><a href="CDF.Partiality.html#B">B</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#C">C</a></span>),<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> (<span class="kwd">Bind</span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> <span class="id"><a href="CDF.Partiality.html#f">f</a></span>) <span class="id"><a href="CDF.Partiality.html#g">g</a></span>) == <span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="kwd">Bind</span> (<span class="id"><a href="CDF.Partiality.html#f">f</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span>) <span class="id"><a href="CDF.Partiality.html#g">g</a></span>)).<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof305')">Proof.</div>
-<div class="proofscript" id="proof305">
+<div class="toggleproof" onclick="toggleDisplay('proof306')">Proof.</div>
+<div class="proofscript" id="proof306">
 &nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id"><a href="CDF.Partiality.html#run_Bind_Bind">run_Bind_Bind</a></span>; <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#eq_later">eq_later</a></span>.<br/>
 Qed.</div>
 <br/>
@@ -413,8 +413,8 @@ Qed.</div>
 <span class="kwd">Lemma</span> <span class="id"><a name="Mon_law_2_aux">Mon_law_2_aux</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">A</span>: <span class="kwd">Type</span>) <span class="id">n</span> (<span class="id">x</span> <span class="id">y</span>: <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>),<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#eta_match">eta_match</a></span> <span class="id"><a href="CDF.Partiality.html#n">n</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span> <span class="id"><a href="CDF.Partiality.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#bisim">bisim</a></span> <span class="id"><a href="CDF.Partiality.html#n">n</a></span> (<span class="id"><a href="CDF.Partiality.html#run">run</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span>) (<span class="id"><a href="CDF.Partiality.html#run">run</a></span> <span class="id"><a href="CDF.Partiality.html#y">y</a></span>).<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof306')">Proof.</div>
-<div class="proofscript" id="proof306">
+<div class="toggleproof" onclick="toggleDisplay('proof307')">Proof.</div>
+<div class="proofscript" id="proof307">
 &nbsp;&nbsp;<span class="id">cofix</span> <span class="id">CIH</span>; <span class="tactic">destruct</span> 1.  <br/>
 &nbsp;&nbsp;- <span class="tactic">destruct</span> <span class="id">m</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;+ <span class="tactic">rewrite</span> <span class="id"><a href="CDF.Partiality.html#run_Bind_Ret">run_Bind_Ret</a></span>, <span class="id"><a href="CDF.Partiality.html#run_Ret">run_Ret</a></span>.<br/>
@@ -437,8 +437,8 @@ Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="Mon_law_2">Mon_law_2</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">A</span>: <span class="kwd">Type</span>) (<span class="id">m</span>: <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>), <span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> (@<span class="id"><a href="CDF.Partiality.html#Ret">Ret</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>)) == <span class="id"><a href="CDF.Partiality.html#run">run</a></span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof307')">Proof.</div>
-<div class="proofscript" id="proof307">
+<div class="toggleproof" onclick="toggleDisplay('proof308')">Proof.</div>
+<div class="proofscript" id="proof308">
 &nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id"><a href="CDF.Partiality.html#bisim_equi">bisim_equi</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#Mon_law_2_aux">Mon_law_2_aux</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#eta_match_1">eta_match_1</a></span>.<br/>
 Qed.</div>
 <br/>
@@ -449,8 +449,8 @@ Qed.</div>
 &nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">A</span> <span class="id">B</span> <span class="id">C</span>: <span class="kwd">Type</span>) (<span class="id">m</span>: <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">k</span>: <span class="id"><a href="CDF.Partiality.html#cont">cont</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span> <span class="id"><a href="CDF.Partiality.html#B">B</a></span>) (<span class="id">f</span>: <span class="id"><a href="CDF.Partiality.html#B">B</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#C">C</a></span>),<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> (<span class="id"><a href="CDF.Partiality.html#insert_cont">insert_cont</a></span> <span class="id"><a href="CDF.Partiality.html#k">k</a></span> <span class="id"><a href="CDF.Partiality.html#f">f</a></span>)) ==<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#bind">bind</a></span> (<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> (<span class="id"><a href="CDF.Partiality.html#insert_cont">insert_cont</a></span> <span class="id"><a href="CDF.Partiality.html#k">k</a></span> (@<span class="id"><a href="CDF.Partiality.html#Ret">Ret</a></span> <span class="id">_</span>)))) (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="id"><a href="CDF.Partiality.html#f">f</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span>)).<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof308')">Proof.</div>
-<div class="proofscript" id="proof308">
+<div class="toggleproof" onclick="toggleDisplay('proof309')">Proof.</div>
+<div class="proofscript" id="proof309">
 &nbsp;&nbsp;<span class="id">cofix</span> <span class="id">CIH</span>; <span class="tactic">intros</span>.<br/>
 &nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">m</span>.<br/>
 &nbsp;&nbsp;- <span class="tactic">rewrite</span> ! <span class="id"><a href="CDF.Partiality.html#run_Bind_Ret">run_Bind_Ret</a></span>. <span class="tactic">destruct</span> <span class="id">k</span>; <span class="id">cbn</span>.<br/>
@@ -466,8 +466,8 @@ Qed.</div>
 <span class="kwd">Theorem</span> <span class="id"><a name="run_Bind">run_Bind</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">A</span> <span class="id">B</span>: <span class="kwd">Type</span>) (<span class="id">m</span>: <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#A">A</a></span>) (<span class="id">f</span>: <span class="id"><a href="CDF.Partiality.html#A">A</a></span> -&gt; <span class="id"><a href="CDF.Partiality.html#mon">mon</a></span> <span class="id"><a href="CDF.Partiality.html#B">B</a></span>),<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="kwd">Bind</span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span> <span class="id"><a href="CDF.Partiality.html#f">f</a></span>) == <span class="id"><a href="CDF.Partiality.html#bind">bind</a></span> (<span class="id"><a href="CDF.Partiality.html#run">run</a></span> <span class="id"><a href="CDF.Partiality.html#m">m</a></span>) (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id"><a href="CDF.Partiality.html#run">run</a></span> (<span class="id"><a href="CDF.Partiality.html#f">f</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span>)).<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof309')">Proof.</div>
-<div class="proofscript" id="proof309">
+<div class="toggleproof" onclick="toggleDisplay('proof310')">Proof.</div>
+<div class="proofscript" id="proof310">
 &nbsp;&nbsp;<span class="tactic">intros</span>. <br/>
 &nbsp;&nbsp;<span class="id">change</span> (<span class="kwd">Bind</span> <span class="id">m</span> <span class="id">f</span>) <span class="kwd">with</span> (<span class="kwd">Bind</span> <span class="id">m</span> (<span class="id"><a href="CDF.Partiality.html#insert_cont">insert_cont</a></span> (<span class="id"><a href="CDF.Partiality.html#K0">K0</a></span> <span class="id">_</span>) <span class="id">f</span>)).<br/>
 &nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Partiality.html#equi_trans">equi_trans</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#run_Bind_aux">run_Bind_aux</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#bind_context">bind_context</a></span>. <br/>
@@ -497,30 +497,30 @@ Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="denot_skip">denot_skip</a></span>: <span class="kwd">forall</span> <span class="id">s</span>,<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#denot">denot</a></span> <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> <span class="id"><a href="CDF.Partiality.html#s">s</a></span> == <span class="id"><a href="CDF.Partiality.html#now">now</a></span> <span class="id"><a href="CDF.Partiality.html#s">s</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof310')">Proof.</div>
-<div class="proofscript" id="proof310">
+<div class="toggleproof" onclick="toggleDisplay('proof311')">Proof.</div>
+<div class="proofscript" id="proof311">
 &nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">unroll_delay</span> (<span class="id"><a href="CDF.Partiality.html#denot">denot</a></span> <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> <span class="id">s</span>). <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#equi_refl">equi_refl</a></span>.<br/>
 Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="denot_assign">denot_assign</a></span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">a</span> <span class="id">s</span>,<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#denot">denot</a></span> (<span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span> <span class="id"><a href="CDF.Partiality.html#a">a</a></span>) <span class="id"><a href="CDF.Partiality.html#s">s</a></span> == <span class="id"><a href="CDF.Partiality.html#now">now</a></span> (<span class="id"><a href="CDF.IMP.html#update">update</a></span> <span class="id"><a href="CDF.Partiality.html#x">x</a></span> (<span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id"><a href="CDF.Partiality.html#a">a</a></span> <span class="id"><a href="CDF.Partiality.html#s">s</a></span>) <span class="id"><a href="CDF.Partiality.html#s">s</a></span>).<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof311')">Proof.</div>
-<div class="proofscript" id="proof311">
+<div class="toggleproof" onclick="toggleDisplay('proof312')">Proof.</div>
+<div class="proofscript" id="proof312">
 &nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">unroll_delay</span> (<span class="id"><a href="CDF.Partiality.html#denot">denot</a></span> (<span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id">x</span> <span class="id">a</span>) <span class="id">s</span>). <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#equi_refl">equi_refl</a></span>.<br/>
 Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="denot_seq">denot_seq</a></span>: <span class="kwd">forall</span> <span class="id">c1</span> <span class="id">c2</span> <span class="id">s</span>,<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#denot">denot</a></span> (<span class="id"><a href="CDF.IMP.html#SEQ">SEQ</a></span> <span class="id"><a href="CDF.Partiality.html#c1">c1</a></span> <span class="id"><a href="CDF.Partiality.html#c2">c2</a></span>) <span class="id"><a href="CDF.Partiality.html#s">s</a></span> == <span class="id"><a href="CDF.Partiality.html#bind">bind</a></span> (<span class="id"><a href="CDF.Partiality.html#denot">denot</a></span> <span class="id"><a href="CDF.Partiality.html#c1">c1</a></span> <span class="id"><a href="CDF.Partiality.html#s">s</a></span>) (<span class="id"><a href="CDF.Partiality.html#denot">denot</a></span> <span class="id"><a href="CDF.Partiality.html#c2">c2</a></span>).<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof312')">Proof.</div>
-<div class="proofscript" id="proof312">
+<div class="toggleproof" onclick="toggleDisplay('proof313')">Proof.</div>
+<div class="proofscript" id="proof313">
 &nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.Partiality.html#denot">denot</a></span>; <span class="tactic">intros</span>. <span class="tactic">rewrite</span> (<span class="id"><a href="CDF.Partiality.html#u_mon">u_mon</a></span> (<span class="id"><a href="CDF.Partiality.html#cinterp">cinterp</a></span> (<span class="id">c1</span>;;<span class="id">c2</span>) <span class="id">s</span>)); <span class="id">cbn</span>.<br/>
 &nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#run_Bind">run_Bind</a></span>.<br/>
 Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="denot_ifthenelse">denot_ifthenelse</a></span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span> <span class="id">s</span>,<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#denot">denot</a></span> (<span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id"><a href="CDF.Partiality.html#b">b</a></span> <span class="id"><a href="CDF.Partiality.html#c1">c1</a></span> <span class="id"><a href="CDF.Partiality.html#c2">c2</a></span>) <span class="id"><a href="CDF.Partiality.html#s">s</a></span> == <span class="kwd">if</span> <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id"><a href="CDF.Partiality.html#b">b</a></span> <span class="id"><a href="CDF.Partiality.html#s">s</a></span> <span class="kwd">then</span> <span class="id"><a href="CDF.Partiality.html#denot">denot</a></span> <span class="id"><a href="CDF.Partiality.html#c1">c1</a></span> <span class="id"><a href="CDF.Partiality.html#s">s</a></span> <span class="kwd">else</span> <span class="id"><a href="CDF.Partiality.html#denot">denot</a></span> <span class="id"><a href="CDF.Partiality.html#c2">c2</a></span> <span class="id"><a href="CDF.Partiality.html#s">s</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof313')">Proof.</div>
-<div class="proofscript" id="proof313">
+<div class="toggleproof" onclick="toggleDisplay('proof314')">Proof.</div>
+<div class="proofscript" id="proof314">
 &nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.Partiality.html#denot">denot</a></span>; <span class="tactic">intros</span>. <span class="tactic">rewrite</span> (<span class="id"><a href="CDF.Partiality.html#u_mon">u_mon</a></span> (<span class="id"><a href="CDF.Partiality.html#cinterp">cinterp</a></span> (<span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span>) <span class="id">s</span>)); <span class="id">cbn</span>.<br/>
 &nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="CDF.Partiality.html#run_Later">run_Later</a></span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>); <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#eq_later">eq_later</a></span>.<br/>
 Qed.</div>
@@ -528,8 +528,8 @@ Qed.</div>
 <span class="kwd">Lemma</span> <span class="id"><a name="denot_while">denot_while</a></span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">c</span> <span class="id">s</span>,<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Partiality.html#denot">denot</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.Partiality.html#b">b</a></span> <span class="id"><a href="CDF.Partiality.html#c">c</a></span>) <span class="id"><a href="CDF.Partiality.html#s">s</a></span> ==<br/>
 &nbsp;&nbsp;<span class="kwd">if</span> <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id"><a href="CDF.Partiality.html#b">b</a></span> <span class="id"><a href="CDF.Partiality.html#s">s</a></span> <span class="kwd">then</span> <span class="id"><a href="CDF.Partiality.html#bind">bind</a></span> (<span class="id"><a href="CDF.Partiality.html#denot">denot</a></span> <span class="id"><a href="CDF.Partiality.html#c">c</a></span> <span class="id"><a href="CDF.Partiality.html#s">s</a></span>) (<span class="id"><a href="CDF.Partiality.html#denot">denot</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.Partiality.html#b">b</a></span> <span class="id"><a href="CDF.Partiality.html#c">c</a></span>)) <span class="kwd">else</span> <span class="id"><a href="CDF.Partiality.html#now">now</a></span> <span class="id"><a href="CDF.Partiality.html#s">s</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof314')">Proof.</div>
-<div class="proofscript" id="proof314">
+<div class="toggleproof" onclick="toggleDisplay('proof315')">Proof.</div>
+<div class="proofscript" id="proof315">
 &nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.Partiality.html#denot">denot</a></span>; <span class="tactic">intros</span>. <span class="tactic">rewrite</span> (<span class="id"><a href="CDF.Partiality.html#u_mon">u_mon</a></span> (<span class="id"><a href="CDF.Partiality.html#cinterp">cinterp</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span>) <span class="id">s</span>)); <span class="id">cbn</span>.<br/>
 &nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>).<br/>
 - <span class="tactic">apply</span> <span class="id"><a href="CDF.Partiality.html#run_Bind">run_Bind</a></span>.<br/>

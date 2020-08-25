@@ -65,8 +65,8 @@
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="aeval_xplus1">aeval_xplus1</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">x</span>, <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> (<span class="id"><a href="CDF.IMP.html#PLUS">PLUS</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> <span class="id"><a href="CDF.IMP.html#x">x</a></span>) (<span class="id"><a href="CDF.IMP.html#CONST">CONST</a></span> 1)) <span class="id"><a href="CDF.IMP.html#s">s</a></span> &gt; <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> <span class="id"><a href="CDF.IMP.html#x">x</a></span>) <span class="id"><a href="CDF.IMP.html#s">s</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof205')">Proof.</div>
-<div class="proofscript" id="proof205">
+<div class="toggleproof" onclick="toggleDisplay('proof206')">Proof.</div>
+<div class="proofscript" id="proof206">
 &nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">cbn</span>. <span class="id">lia</span>.<br/>
 Qed.</div>
 <br/>
@@ -87,8 +87,8 @@ Qed.</div>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">a</span>,<br/>
 &nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">x</span>, <span class="id"><a href="CDF.IMP.html#free_in_aexp">free_in_aexp</a></span> <span class="id"><a href="CDF.IMP.html#x">x</a></span> <span class="id"><a href="CDF.IMP.html#a">a</a></span> -&gt; <span class="id"><a href="CDF.IMP.html#s1">s1</a></span> <span class="id"><a href="CDF.IMP.html#x">x</a></span> = <span class="id"><a href="CDF.IMP.html#s2">s2</a></span> <span class="id"><a href="CDF.IMP.html#x">x</a></span>) -&gt;<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id"><a href="CDF.IMP.html#a">a</a></span> <span class="id"><a href="CDF.IMP.html#s1">s1</a></span> = <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id"><a href="CDF.IMP.html#a">a</a></span> <span class="id"><a href="CDF.IMP.html#s2">s2</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof206')">Proof.</div>
-<div class="proofscript" id="proof206">
+<div class="toggleproof" onclick="toggleDisplay('proof207')">Proof.</div>
+<div class="proofscript" id="proof207">
 &nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">a</span>; <span class="id">cbn</span>; <span class="tactic">intros</span> <span class="id">SAMEFREE</span>.<br/>
 - <span class="comment">(*&nbsp;Case&nbsp;a&nbsp;=&nbsp;CONST&nbsp;n&nbsp;*)</span><br/>
 &nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
@@ -111,8 +111,8 @@ Qed.</div>
 <div class="doc">Its semantics is the one we expect. </div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="aeval_OPP">aeval_OPP</a></span>: <span class="kwd">forall</span> <span class="id">s</span> <span class="id">a</span>, <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> (<span class="id"><a href="CDF.IMP.html#OPP">OPP</a></span> <span class="id"><a href="CDF.IMP.html#a">a</a></span>) <span class="id"><a href="CDF.IMP.html#s">s</a></span> = - (<span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id"><a href="CDF.IMP.html#a">a</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span>).<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof207')">Proof.</div>
-<div class="proofscript" id="proof207">
+<div class="toggleproof" onclick="toggleDisplay('proof208')">Proof.</div>
+<div class="proofscript" id="proof208">
 &nbsp;&nbsp;<span class="tactic">intros</span>; <span class="id">cbn</span>. <span class="id">lia</span>.<br/>
 Qed.</div>
 <br/>
@@ -243,8 +243,8 @@ Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="beval_OR">beval_OR</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">b1</span> <span class="id">b2</span>, <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> (<span class="id"><a href="CDF.IMP.html#OR">OR</a></span> <span class="id"><a href="CDF.IMP.html#b1">b1</a></span> <span class="id"><a href="CDF.IMP.html#b2">b2</a></span>) <span class="id"><a href="CDF.IMP.html#s">s</a></span> = <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id"><a href="CDF.IMP.html#b1">b1</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> || <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id"><a href="CDF.IMP.html#b2">b2</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof208')">Proof.</div>
-<div class="proofscript" id="proof208">
+<div class="toggleproof" onclick="toggleDisplay('proof209')">Proof.</div>
+<div class="proofscript" id="proof209">
 &nbsp;&nbsp;<span class="tactic">intros</span>; <span class="id">cbn</span>.<br/>
 &nbsp;&nbsp;<span class="comment">(*&nbsp;Hint:&nbsp;use&nbsp;"SearchAbout&nbsp;negb"&nbsp;to&nbsp;see&nbsp;the&nbsp;available&nbsp;lemmas<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;that&nbsp;deal&nbsp;with&nbsp;Boolean&nbsp;negation.&nbsp;*)</span><br/>
@@ -294,14 +294,14 @@ Abort.</div>
 &nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">y</span> =&gt; <span class="kwd">if</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> <span class="id"><a href="CDF.IMP.html#x">x</a></span> <span class="id"><a href="CDF.IMP.html#y">y</a></span> <span class="kwd">then</span> <span class="id"><a href="CDF.IMP.html#v">v</a></span> <span class="kwd">else</span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#y">y</a></span>.<br/>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="update_same">update_same</a></span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">v</span> <span class="id">s</span>, (<span class="id"><a href="CDF.IMP.html#update">update</a></span> <span class="id"><a href="CDF.IMP.html#x">x</a></span> <span class="id"><a href="CDF.IMP.html#v">v</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span>) <span class="id"><a href="CDF.IMP.html#x">x</a></span> = <span class="id"><a href="CDF.IMP.html#v">v</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof209')">Proof.</div>
-<div class="proofscript" id="proof209">
+<div class="toggleproof" onclick="toggleDisplay('proof210')">Proof.</div>
+<div class="proofscript" id="proof210">
 &nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.IMP.html#update">update</a></span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> <span class="id">x</span> <span class="id">x</span>); <span class="tactic">congruence</span>.<br/>
 Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="update_other">update_other</a></span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">v</span> <span class="id">s</span> <span class="id">y</span>, <span class="id"><a href="CDF.IMP.html#x">x</a></span> &lt;&gt; <span class="id"><a href="CDF.IMP.html#y">y</a></span> -&gt; (<span class="id"><a href="CDF.IMP.html#update">update</a></span> <span class="id"><a href="CDF.IMP.html#x">x</a></span> <span class="id"><a href="CDF.IMP.html#v">v</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span>) <span class="id"><a href="CDF.IMP.html#y">y</a></span> = <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#y">y</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof210')">Proof.</div>
-<div class="proofscript" id="proof210">
+<div class="toggleproof" onclick="toggleDisplay('proof211')">Proof.</div>
+<div class="proofscript" id="proof211">
 &nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.IMP.html#update">update</a></span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> <span class="id">x</span> <span class="id">y</span>); <span class="tactic">congruence</span>.<br/>
 Qed.</div>
 <br/>
@@ -364,8 +364,8 @@ Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="red_determ">red_determ</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">cs</span> <span class="id">cs1</span>, <span class="tactic">red</span> <span class="id"><a href="CDF.IMP.html#cs">cs</a></span> <span class="id"><a href="CDF.IMP.html#cs1">cs1</a></span> -&gt; <span class="kwd">forall</span> <span class="id">cs2</span>, <span class="tactic">red</span> <span class="id"><a href="CDF.IMP.html#cs">cs</a></span> <span class="id"><a href="CDF.IMP.html#cs2">cs2</a></span> -&gt; <span class="id"><a href="CDF.IMP.html#cs1">cs1</a></span> = <span class="id"><a href="CDF.IMP.html#cs2">cs2</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof211')">Proof.</div>
-<div class="proofscript" id="proof211">
+<div class="toggleproof" onclick="toggleDisplay('proof212')">Proof.</div>
+<div class="proofscript" id="proof212">
 &nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span> <span class="id">cs2</span> <span class="id">R2</span>; <span class="tactic">inversion</span> <span class="id">R2</span>; <span class="tactic">subst</span>; <span class="tactic">eauto</span>.<br/>
 - <span class="tactic">inversion</span> <span class="id">H3</span>.<br/>
 - <span class="tactic">inversion</span> <span class="id">H</span>.<br/>
@@ -412,16 +412,16 @@ Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="red_progress">red_progress</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">s</span>, <span class="id"><a href="CDF.IMP.html#c">c</a></span> = <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> \/ <span class="id">exists</span> <span class="id">c</span>', <span class="id">exists</span> <span class="id">s</span>', <span class="tactic">red</span> (<span class="id"><a href="CDF.IMP.html#c">c</a></span>, <span class="id"><a href="CDF.IMP.html#s">s</a></span>) (<span class="id">c</span>', <span class="id">s</span>').<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof212')">Proof.</div>
-<div class="proofscript" id="proof212">
+<div class="toggleproof" onclick="toggleDisplay('proof213')">Proof.</div>
+<div class="proofscript" id="proof213">
 &nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">c</span>; <span class="tactic">intros</span>.<br/>
 &nbsp;&nbsp;<span class="comment">(*&nbsp;FILL&nbsp;IN&nbsp;HERE&nbsp;*)</span><br/>
 Abort.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="not_goes_wrong">not_goes_wrong</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">s</span>, ~(<span class="id"><a href="CDF.IMP.html#goes_wrong">goes_wrong</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span>).<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof213')">Proof.</div>
-<div class="proofscript" id="proof213">
+<div class="toggleproof" onclick="toggleDisplay('proof214')">Proof.</div>
+<div class="proofscript" id="proof214">
 &nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">c</span> <span class="id">s</span> (<span class="id">c</span>' &amp; <span class="id">s</span>' &amp; <span class="id">STAR</span> &amp; <span class="id">IRRED</span> &amp; <span class="id">NOTSKIP</span>).<br/>
 &nbsp;&nbsp;<span class="comment">(*&nbsp;FILL&nbsp;IN&nbsp;HERE&nbsp;*)</span><br/>
 Abort.</div>
@@ -432,8 +432,8 @@ Abort.</div>
 <span class="kwd">Lemma</span> <span class="id"><a name="red_seq_steps">red_seq_steps</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c2</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>' <span class="id">c</span>',<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Sequences.html#star">star</a></span> <span class="tactic">red</span> (<span class="id"><a href="CDF.IMP.html#c">c</a></span>, <span class="id"><a href="CDF.IMP.html#s">s</a></span>) (<span class="id">c</span>', <span class="id">s</span>') -&gt; <span class="id"><a href="CDF.Sequences.html#star">star</a></span> <span class="tactic">red</span> ((<span class="id"><a href="CDF.IMP.html#c">c</a></span>;;<span class="id"><a href="CDF.IMP.html#c2">c2</a></span>), <span class="id"><a href="CDF.IMP.html#s">s</a></span>) ((<span class="id">c</span>';;<span class="id"><a href="CDF.IMP.html#c2">c2</a></span>), <span class="id">s</span>').<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof214')">Proof.</div>
-<div class="proofscript" id="proof214">
+<div class="toggleproof" onclick="toggleDisplay('proof215')">Proof.</div>
+<div class="proofscript" id="proof215">
 &nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">dependent</span> <span class="tactic">induction</span> <span class="id">H</span>.<br/>
 - <span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#star_refl">star_refl</a></span>.<br/>
 - <span class="tactic">destruct</span> <span class="id">b</span> <span class="kwd">as</span> [<span class="id">c1</span> <span class="id">st1</span>].<br/>
@@ -470,8 +470,8 @@ Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="cexec_infinite_loop">cexec_infinite_loop</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span>, ~ <span class="id">exists</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.IMP.html#TRUE">TRUE</a></span> <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span>) <span class="id">s</span>'.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof215')">Proof.</div>
-<div class="proofscript" id="proof215">
+<div class="toggleproof" onclick="toggleDisplay('proof216')">Proof.</div>
+<div class="proofscript" id="proof216">
 &nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">A</span>: <span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span> <span class="id">s</span>' -&gt; <span class="id"><a href="CDF.IMP.html#c">c</a></span> = <span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.IMP.html#TRUE">TRUE</a></span> <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span>).<br/>
 &nbsp;&nbsp;{ <span class="tactic">induction</span> 1; <span class="tactic">intros</span> <span class="id">EQ</span>; <span class="tactic">inversion</span> <span class="id">EQ</span>.<br/>
 &nbsp;&nbsp;- <span class="tactic">subst</span> <span class="id">b</span> <span class="id">c</span>. <span class="id">cbn</span> <span class="kwd">in</span> <span class="id">H</span>. <span class="tactic">discriminate</span>.<br/>
@@ -490,8 +490,8 @@ Qed.</div>
 <br/>
 <span class="kwd">Theorem</span> <span class="id"><a name="cexec_to_reds">cexec_to_reds</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span> <span class="id">s</span>' -&gt; <span class="id"><a href="CDF.Sequences.html#star">star</a></span> <span class="tactic">red</span> (<span class="id"><a href="CDF.IMP.html#c">c</a></span>, <span class="id"><a href="CDF.IMP.html#s">s</a></span>) (<span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span>, <span class="id">s</span>').<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof216')">Proof.</div>
-<div class="proofscript" id="proof216">
+<div class="toggleproof" onclick="toggleDisplay('proof217')">Proof.</div>
+<div class="proofscript" id="proof217">
 &nbsp;&nbsp;<span class="tactic">induction</span> 1.<br/>
 - <span class="comment">(*&nbsp;SKIP&nbsp;*)</span><br/>
 &nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#star_refl">star_refl</a></span>.<br/>
@@ -518,8 +518,8 @@ Qed.</div>
 <span class="kwd">Lemma</span> <span class="id"><a name="red_append_cexec">red_append_cexec</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c1</span> <span class="id">s1</span> <span class="id">c2</span> <span class="id">s2</span>, <span class="tactic">red</span> (<span class="id"><a href="CDF.IMP.html#c1">c1</a></span>, <span class="id"><a href="CDF.IMP.html#s1">s1</a></span>) (<span class="id"><a href="CDF.IMP.html#c2">c2</a></span>, <span class="id"><a href="CDF.IMP.html#s2">s2</a></span>) -&gt;<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.IMP.html#s2">s2</a></span> <span class="id"><a href="CDF.IMP.html#c2">c2</a></span> <span class="id">s</span>' -&gt; <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.IMP.html#s1">s1</a></span> <span class="id"><a href="CDF.IMP.html#c1">c1</a></span> <span class="id">s</span>'.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof217')">Proof.</div>
-<div class="proofscript" id="proof217">
+<div class="toggleproof" onclick="toggleDisplay('proof218')">Proof.</div>
+<div class="proofscript" id="proof218">
 &nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">s2</span>; <span class="tactic">intros</span> <span class="id">STEP</span>. <span class="tactic">dependent</span> <span class="tactic">induction</span> <span class="id">STEP</span>; <span class="tactic">intros</span>.<br/>
 - <span class="comment">(*&nbsp;red_assign&nbsp;*)</span><br/>
 &nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_assign">cexec_assign</a></span>. <br/>
@@ -544,8 +544,8 @@ Qed.</div>
 <span class="kwd">Theorem</span> <span class="id"><a name="reds_to_cexec">reds_to_cexec</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>',<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Sequences.html#star">star</a></span> <span class="tactic">red</span> (<span class="id"><a href="CDF.IMP.html#c">c</a></span>, <span class="id"><a href="CDF.IMP.html#s">s</a></span>) (<span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span>, <span class="id">s</span>') -&gt; <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span> <span class="id">s</span>'.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof218')">Proof.</div>
-<div class="proofscript" id="proof218">
+<div class="toggleproof" onclick="toggleDisplay('proof219')">Proof.</div>
+<div class="proofscript" id="proof219">
 &nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">dependent</span> <span class="tactic">induction</span> <span class="id">H</span>.<br/>
 - <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_skip">cexec_skip</a></span>.<br/>
 - <span class="tactic">destruct</span> <span class="id">b</span> <span class="kwd">as</span> [<span class="id">c1</span> <span class="id">s1</span>]. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_append_cexec">red_append_cexec</a></span> <span class="kwd">with</span> <span class="id">c1</span> <span class="id">s1</span>; <span class="tactic">auto</span>.<br/>
@@ -605,8 +605,8 @@ Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="cexec_f_sound">cexec_f_sound</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fuel</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#cexec_f">cexec_f</a></span> <span class="id"><a href="CDF.IMP.html#fuel">fuel</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">s</span>' -&gt; <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span> <span class="id">s</span>'.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof219')">Proof.</div>
-<div class="proofscript" id="proof219">
+<div class="toggleproof" onclick="toggleDisplay('proof220')">Proof.</div>
+<div class="proofscript" id="proof220">
 &nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">fuel</span> <span class="kwd">as</span> [ | <span class="id">fuel</span> ]; <span class="id">cbn</span>; <span class="tactic">intros</span>.<br/>
 - <span class="tactic">discriminate</span>.<br/>
 - <span class="tactic">destruct</span> <span class="id">c</span>.<br/>
@@ -616,8 +616,8 @@ Abort.</div>
 <span class="kwd">Lemma</span> <span class="id"><a name="cexec_f_complete">cexec_f_complete</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span> <span class="id">s</span>' -&gt;<br/>
 &nbsp;&nbsp;<span class="id">exists</span> <span class="id">fuel1</span>, <span class="kwd">forall</span> <span class="id">fuel</span>, (<span class="id"><a href="CDF.IMP.html#fuel">fuel</a></span> &gt;= <span class="id"><a href="CDF.IMP.html#fuel1">fuel1</a></span>)%<span class="id">nat</span> -&gt; <span class="id"><a href="CDF.IMP.html#cexec_f">cexec_f</a></span> <span class="id"><a href="CDF.IMP.html#fuel">fuel</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">s</span>'.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof220')">Proof.</div>
-<div class="proofscript" id="proof220">
+<div class="toggleproof" onclick="toggleDisplay('proof221')">Proof.</div>
+<div class="proofscript" id="proof221">
 &nbsp;&nbsp;<span class="tactic">induction</span> 1.<br/>
 &nbsp;&nbsp;<span class="comment">(*&nbsp;FILL&nbsp;IN&nbsp;HERE&nbsp;*)</span><br/>
 Abort.</div>
@@ -754,8 +754,8 @@ Abort.</div>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">k</span> <span class="id">c1</span> <span class="id">s1</span> <span class="id">c2</span> <span class="id">s2</span>,<br/>
 &nbsp;&nbsp;<span class="tactic">red</span> (<span class="id"><a href="CDF.IMP.html#c1">c1</a></span>, <span class="id"><a href="CDF.IMP.html#s1">s1</a></span>) (<span class="id"><a href="CDF.IMP.html#c2">c2</a></span>, <span class="id"><a href="CDF.IMP.html#s2">s2</a></span>) -&gt;<br/>
 &nbsp;&nbsp;<span class="tactic">red</span> (<span class="id"><a href="CDF.IMP.html#apply_cont">apply_cont</a></span> <span class="id"><a href="CDF.IMP.html#k">k</a></span> <span class="id"><a href="CDF.IMP.html#c1">c1</a></span>, <span class="id"><a href="CDF.IMP.html#s1">s1</a></span>) (<span class="id"><a href="CDF.IMP.html#apply_cont">apply_cont</a></span> <span class="id"><a href="CDF.IMP.html#k">k</a></span> <span class="id"><a href="CDF.IMP.html#c2">c2</a></span>, <span class="id"><a href="CDF.IMP.html#s2">s2</a></span>).<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof221')">Proof.</div>
-<div class="proofscript" id="proof221">
+<div class="toggleproof" onclick="toggleDisplay('proof222')">Proof.</div>
+<div class="proofscript" id="proof222">
 &nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">k</span>; <span class="tactic">intros</span>; <span class="tactic">simpl</span>; <span class="tactic">eauto</span> <span class="kwd">using</span> <span class="id"><a href="CDF.IMP.html#red_seq_step">red_seq_step</a></span>.<br/>
 Qed.</div>
 <br/>
@@ -765,8 +765,8 @@ Qed.</div>
 &nbsp;&nbsp;<span class="id">exists</span> <span class="id">C2</span>',<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="CDF.Sequences.html#plus">plus</a></span> <span class="tactic">red</span> <span class="id"><a href="CDF.IMP.html#C2">C2</a></span> <span class="id">C2</span>' \/ (<span class="id"><a href="CDF.Sequences.html#star">star</a></span> <span class="tactic">red</span> <span class="id"><a href="CDF.IMP.html#C2">C2</a></span> <span class="id">C2</span>' /\ <span class="id"><a href="CDF.IMP.html#kmeasure">kmeasure</a></span> <span class="id">C1</span>' &lt; <span class="id"><a href="CDF.IMP.html#kmeasure">kmeasure</a></span> <span class="id"><a href="CDF.IMP.html#C1">C1</a></span>))%<span class="id">nat</span><br/>
 &nbsp;&nbsp;/\ <span class="id"><a href="CDF.IMP.html#match_conf">match_conf</a></span> <span class="id">C1</span>' <span class="id">C2</span>'.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof222')">Proof.</div>
-<div class="proofscript" id="proof222">
+<div class="toggleproof" onclick="toggleDisplay('proof223')">Proof.</div>
+<div class="proofscript" id="proof223">
 &nbsp;&nbsp;<span class="tactic">destruct</span> 1; <span class="tactic">intros</span> <span class="id">C2</span> <span class="id">MC</span>; <span class="tactic">inversion</span> <span class="id">MC</span>; <span class="tactic">subst</span>; <span class="id">cbn</span>.<br/>
 &nbsp;&nbsp;2: <span class="id">econstructor</span>; <span class="tactic">split</span>; [<span class="id">right</span>; <span class="tactic">split</span>; [<span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#star_refl">star_refl</a></span> | <span class="id">lia</span>] | <span class="id">constructor</span>; <span class="tactic">auto</span> ].<br/>
 &nbsp;&nbsp;1-6: <span class="id">econstructor</span>; <span class="tactic">split</span>; [<span class="id">left</span>; <span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#plus_one">plus_one</a></span>; <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_apply_cont">red_apply_cont</a></span>; <span class="tactic">auto</span> <span class="kwd">using</span> <span class="tactic">red</span> | <span class="id">constructor</span>; <span class="tactic">auto</span>].<br/>
@@ -778,8 +778,8 @@ Qed.</div>
 <br/>
 <span class="kwd">Theorem</span> <span class="id"><a name="kterminates_terminates">kterminates_terminates</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#kterminates">kterminates</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span> <span class="id">s</span>' -&gt; <span class="id"><a href="CDF.IMP.html#terminates">terminates</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span> <span class="id">s</span>'.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof223')">Proof.</div>
-<div class="proofscript" id="proof223">
+<div class="toggleproof" onclick="toggleDisplay('proof224')">Proof.</div>
+<div class="proofscript" id="proof224">
 &nbsp;&nbsp;<span class="tactic">intros</span>. <br/>
 &nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Simulation.html#simulation_star">simulation_star</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id"><a href="CDF.IMP.html#simulation_cont_red">simulation_cont_red</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span> (<span class="id">c</span>, <span class="id">s</span>)) <span class="kwd">as</span> ((<span class="id">c</span>' &amp; <span class="id">s</span>'') &amp; <span class="id">STAR</span> &amp; <span class="id">INV</span>).<br/>
 &nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
@@ -788,8 +788,8 @@ Qed.</div>
 <br/>
 <span class="kwd">Theorem</span> <span class="id"><a name="kdiverges_diverges">kdiverges_diverges</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span>, <span class="id"><a href="CDF.IMP.html#kdiverges">kdiverges</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span> -&gt;  <span class="id"><a href="CDF.IMP.html#diverges">diverges</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof224')">Proof.</div>
-<div class="proofscript" id="proof224">
+<div class="toggleproof" onclick="toggleDisplay('proof225')">Proof.</div>
+<div class="proofscript" id="proof225">
 &nbsp;&nbsp;<span class="tactic">intros</span>. <br/>
 &nbsp;&nbsp;<span class="tactic">apply</span> (<span class="id"><a href="CDF.Simulation.html#simulation_infseq">simulation_infseq</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id"><a href="CDF.IMP.html#simulation_cont_red">simulation_cont_red</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span>).<br/>
 &nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
@@ -812,8 +812,8 @@ Qed.</div>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">k</span> <span class="id">c</span> <span class="id">s</span> <span class="id">c</span>' <span class="id">s</span>',<br/>
 &nbsp;&nbsp;<span class="tactic">red</span> (<span class="id"><a href="CDF.IMP.html#apply_cont">apply_cont</a></span> <span class="id"><a href="CDF.IMP.html#k">k</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span>, <span class="id"><a href="CDF.IMP.html#s">s</a></span>) (<span class="id">c</span>', <span class="id">s</span>') -&gt;<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#red_apply_cont_cases">red_apply_cont_cases</a></span> <span class="id"><a href="CDF.IMP.html#k">k</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id">c</span>' <span class="id">s</span>'.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof225')">Proof.</div>
-<div class="proofscript" id="proof225">
+<div class="toggleproof" onclick="toggleDisplay('proof226')">Proof.</div>
+<div class="proofscript" id="proof226">
 &nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">k</span>; <span class="tactic">simpl</span>; <span class="tactic">intros</span>. <br/>
 - <span class="comment">(*&nbsp;Kstop&nbsp;*)</span><br/>
 &nbsp;&nbsp;<span class="id">change</span> <span class="id">c</span>' <span class="kwd">with</span> (<span class="id"><a href="CDF.IMP.html#apply_cont">apply_cont</a></span> <span class="id"><a href="CDF.IMP.html#Kstop">Kstop</a></span> <span class="id">c</span>'). <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#racc_base">racc_base</a></span>; <span class="tactic">auto</span>.<br/>
@@ -844,8 +844,8 @@ Qed.</div>
 &nbsp;&nbsp;<span class="id">exists</span> <span class="id">C2</span>',<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="CDF.Sequences.html#plus">plus</a></span> <span class="id"><a href="CDF.IMP.html#step">step</a></span> <span class="id"><a href="CDF.IMP.html#C2">C2</a></span> <span class="id">C2</span>' \/ (<span class="id"><a href="CDF.Sequences.html#star">star</a></span> <span class="id"><a href="CDF.IMP.html#step">step</a></span> <span class="id"><a href="CDF.IMP.html#C2">C2</a></span> <span class="id">C2</span>' /\ <span class="id"><a href="CDF.IMP.html#rmeasure">rmeasure</a></span> <span class="id">C1</span>' &lt; <span class="id"><a href="CDF.IMP.html#rmeasure">rmeasure</a></span> <span class="id"><a href="CDF.IMP.html#C1">C1</a></span>))%<span class="id">nat</span><br/>
 &nbsp;&nbsp;/\ <span class="id"><a href="CDF.IMP.html#match_conf">match_conf</a></span> <span class="id">C2</span>' <span class="id">C1</span>'.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof226')">Proof.</div>
-<div class="proofscript" id="proof226">
+<div class="toggleproof" onclick="toggleDisplay('proof227')">Proof.</div>
+<div class="proofscript" id="proof227">
 &nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">C1</span> <span class="id">C1</span>' <span class="id">R</span> <span class="id">C2</span> <span class="id">MC</span>. <span class="tactic">inversion</span> <span class="id">MC</span>; <span class="tactic">subst</span>. <span class="tactic">destruct</span> <span class="id">C1</span>' <span class="kwd">as</span> (<span class="id">c</span>' &amp; <span class="id">s</span>').<br/>
 &nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">A</span>: <span class="id"><a href="CDF.IMP.html#red_apply_cont_cases">red_apply_cont_cases</a></span> <span class="id">k</span> <span class="id">c</span> <span class="id">s</span> <span class="id">c</span>' <span class="id">s</span>') <span class="tactic">by</span> (<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#invert_red_apply_cont">invert_red_apply_cont</a></span>; <span class="tactic">auto</span>).<br/>
 &nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">MC</span> <span class="id">R</span>. <span class="tactic">inversion</span> <span class="id">A</span>; <span class="tactic">subst</span>; <span class="tactic">clear</span> <span class="id">A</span>.<br/>
@@ -873,8 +873,8 @@ Qed.</div>
 <br/>
 <span class="kwd">Lemma</span> <span class="id"><a name="apply_cont_is_skip">apply_cont_is_skip</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">k</span> <span class="id">c</span>, <span class="id"><a href="CDF.IMP.html#apply_cont">apply_cont</a></span> <span class="id"><a href="CDF.IMP.html#k">k</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span> = <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> -&gt; <span class="id"><a href="CDF.IMP.html#k">k</a></span> = <span class="id"><a href="CDF.IMP.html#Kstop">Kstop</a></span> /\ <span class="id"><a href="CDF.IMP.html#c">c</a></span> = <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof227')">Proof.</div>
-<div class="proofscript" id="proof227">
+<div class="toggleproof" onclick="toggleDisplay('proof228')">Proof.</div>
+<div class="proofscript" id="proof228">
 &nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">k</span>; <span class="id">cbn</span>; <span class="tactic">intros</span>.<br/>
 - <span class="tactic">auto</span>.<br/>
 - <span class="tactic">apply</span> <span class="id">IHk</span> <span class="kwd">in</span> <span class="id">H</span>. <span class="tactic">intuition</span> <span class="tactic">discriminate</span>.<br/>
@@ -883,8 +883,8 @@ Qed.</div>
 <br/>
 <span class="kwd">Theorem</span> <span class="id"><a name="terminates_kterminates">terminates_kterminates</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#terminates">terminates</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span> <span class="id">s</span>' -&gt; <span class="id"><a href="CDF.IMP.html#kterminates">kterminates</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span> <span class="id">s</span>'.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof228')">Proof.</div>
-<div class="proofscript" id="proof228">
+<div class="toggleproof" onclick="toggleDisplay('proof229')">Proof.</div>
+<div class="proofscript" id="proof229">
 &nbsp;&nbsp;<span class="tactic">intros</span>. <br/>
 &nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Simulation.html#simulation_star">simulation_star</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id"><a href="CDF.IMP.html#simulation_red_cont">simulation_red_cont</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span> (<span class="id">c</span>, <span class="id"><a href="CDF.IMP.html#Kstop">Kstop</a></span>, <span class="id">s</span>)) <span class="kwd">as</span> ((<span class="id">c</span>' &amp; <span class="id">s</span>'') &amp; <span class="id">STAR</span> &amp; <span class="id">INV</span>).<br/>
 &nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
@@ -894,8 +894,8 @@ Qed.</div>
 <br/>
 <span class="kwd">Theorem</span> <span class="id"><a name="diverges_kdiverges">diverges_kdiverges</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span>, <span class="id"><a href="CDF.IMP.html#diverges">diverges</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span> -&gt;  <span class="id"><a href="CDF.IMP.html#kdiverges">kdiverges</a></span> <span class="id"><a href="CDF.IMP.html#s">s</a></span> <span class="id"><a href="CDF.IMP.html#c">c</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof229')">Proof.</div>
-<div class="proofscript" id="proof229">
+<div class="toggleproof" onclick="toggleDisplay('proof230')">Proof.</div>
+<div class="proofscript" id="proof230">
 &nbsp;&nbsp;<span class="tactic">intros</span>. <br/>
 &nbsp;&nbsp;<span class="tactic">apply</span> (<span class="id"><a href="CDF.Simulation.html#simulation_infseq">simulation_infseq</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id"><a href="CDF.IMP.html#simulation_red_cont">simulation_red_cont</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span>).<br/>
 &nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>

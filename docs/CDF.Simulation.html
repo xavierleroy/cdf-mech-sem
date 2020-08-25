@@ -58,8 +58,8 @@
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c1</span> <span class="id">c1</span>', <span class="id"><a href="CDF.Sequences.html#star">star</a></span> <span class="id"><a href="CDF.Simulation.html#SIMULATION_DIAGRAM.step1">step1</a></span> <span class="id"><a href="CDF.Simulation.html#c1">c1</a></span> <span class="id">c1</span>' -&gt;<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c2</span>, <span class="id"><a href="CDF.Simulation.html#SIMULATION_DIAGRAM.inv">inv</a></span> <span class="id"><a href="CDF.Simulation.html#c1">c1</a></span> <span class="id"><a href="CDF.Simulation.html#c2">c2</a></span> -&gt;<br/>
 &nbsp;&nbsp;<span class="id">exists</span> <span class="id">c2</span>', <span class="id"><a href="CDF.Sequences.html#star">star</a></span> <span class="id"><a href="CDF.Simulation.html#SIMULATION_DIAGRAM.step2">step2</a></span> <span class="id"><a href="CDF.Simulation.html#c2">c2</a></span> <span class="id">c2</span>' /\ <span class="id"><a href="CDF.Simulation.html#SIMULATION_DIAGRAM.inv">inv</a></span> <span class="id">c1</span>' <span class="id">c2</span>'.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof365')">Proof.</div>
-<div class="proofscript" id="proof365">
+<div class="toggleproof" onclick="toggleDisplay('proof366')">Proof.</div>
+<div class="proofscript" id="proof366">
 &nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span>.<br/>
 - <span class="comment">(*&nbsp;zero&nbsp;transitions&nbsp;*)</span><br/>
 &nbsp;&nbsp;<span class="id">exists</span> <span class="id">c2</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#star_refl">star_refl</a></span>. <span class="tactic">auto</span>.<br/>
@@ -88,8 +88,8 @@ Qed.</div>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Sequences.html#plus">plus</a></span> <span class="id"><a href="CDF.Simulation.html#SIMULATION_DIAGRAM.step2">step2</a></span> <span class="id"><a href="CDF.Simulation.html#c2">c2</a></span> <span class="id">c2</span>'<br/>
 &nbsp;&nbsp;&nbsp;/\ <span class="id"><a href="CDF.Sequences.html#infseq">infseq</a></span> <span class="id"><a href="CDF.Simulation.html#SIMULATION_DIAGRAM.step1">step1</a></span> <span class="id">c1</span>'<br/>
 &nbsp;&nbsp;&nbsp;/\ <span class="id"><a href="CDF.Simulation.html#SIMULATION_DIAGRAM.inv">inv</a></span> <span class="id">c1</span>' <span class="id">c2</span>'.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof366')">Proof.</div>
-<div class="proofscript" id="proof366">
+<div class="toggleproof" onclick="toggleDisplay('proof367')">Proof.</div>
+<div class="proofscript" id="proof367">
 &nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">N</span>; <span class="tactic">intros</span> <span class="id">c1</span> <span class="id">c2</span> <span class="id">MEAS</span> <span class="id">INF1</span> <span class="id">INV</span>.<br/>
 - <span class="comment">(*&nbsp;N&nbsp;=&nbsp;0&nbsp;*)</span><br/>
 &nbsp;&nbsp;<span class="id">lia</span>.<br/>
@@ -116,8 +116,8 @@ Qed.</div>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Sequences.html#infseq">infseq</a></span> <span class="id"><a href="CDF.Simulation.html#SIMULATION_DIAGRAM.step1">step1</a></span> <span class="id"><a href="CDF.Simulation.html#c1">c1</a></span> -&gt;<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Simulation.html#SIMULATION_DIAGRAM.inv">inv</a></span> <span class="id"><a href="CDF.Simulation.html#c1">c1</a></span> <span class="id"><a href="CDF.Simulation.html#c2">c2</a></span> -&gt;<br/>
 &nbsp;&nbsp;<span class="id"><a href="CDF.Sequences.html#infseq">infseq</a></span> <span class="id"><a href="CDF.Simulation.html#SIMULATION_DIAGRAM.step2">step2</a></span> <span class="id"><a href="CDF.Simulation.html#c2">c2</a></span>.<br/>
-<div class="toggleproof" onclick="toggleDisplay('proof367')">Proof.</div>
-<div class="proofscript" id="proof367">
+<div class="toggleproof" onclick="toggleDisplay('proof368')">Proof.</div>
+<div class="proofscript" id="proof368">
 &nbsp;&nbsp;<span class="tactic">intros</span>. <br/>
 &nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#infseq_coinduction_principle">infseq_coinduction_principle</a></span> <span class="kwd">with</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">X</span> := <span class="kwd">fun</span> <span class="id">c2</span> =&gt; <span class="id">exists</span> <span class="id">c1</span>, <span class="id"><a href="CDF.Sequences.html#infseq">infseq</a></span> <span class="id"><a href="CDF.Simulation.html#SIMULATION_DIAGRAM.step1">step1</a></span> <span class="id"><a href="CDF.Simulation.html#c1">c1</a></span> /\ <span class="id"><a href="CDF.Simulation.html#SIMULATION_DIAGRAM.inv">inv</a></span> <span class="id"><a href="CDF.Simulation.html#c1">c1</a></span> <span class="id"><a href="CDF.Simulation.html#c2">c2</a></span>).<br/>
