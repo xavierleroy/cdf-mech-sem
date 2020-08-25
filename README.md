@@ -4,7 +4,7 @@ This repository contains the Coq sources for the course
 ["Mechanized semantics"](https://www.college-de-france.fr/site/xavier-leroy/course-2019-2020.htm)
 given by Xavier Leroy at Collège de France in 2019-2020.  
 
-This is the English version of the Coq sources.  A version commented in French is available [here](https://github.com/xavierleroy/cdf-sem-meca).
+This is the English version of the Coq sources.  La version commentée en français est disponible [ici](https://github.com/xavierleroy/cdf-sem-meca).
 
 An HTML pretty-printing of the commented sources is also available:
 
