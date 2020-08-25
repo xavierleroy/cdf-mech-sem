@@ -1,0 +1,903 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module HoareLogic</title>
+<meta name="description" content="Documentation of Coq module HoareLogic" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module HoareLogic</h1>
+<div class="coq">
+<span class="id">From</span> <span class="id">Coq</span> <span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.ZArith.html">ZArith</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.micromega.Psatz.html">Psatz</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html">Bool</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html">String</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html">List</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Wellfounded.Wellfounded.html">Wellfounded</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Program.Equality.html">Program.Equality</a></span>.<br/>
+<span class="id">From</span> <span class="id">Coq</span> <span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.FunctionalExtensionality.html">FunctionalExtensionality</a></span>.<br/>
+<span class="id">From</span> <span class="id">CDF</span> <span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="CDF.IMP.html">IMP</a></span> <span class="id"><a href="CDF.Sequences.html">Sequences</a></span>.<br/>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Open</span> <span class="kwd">Scope</span> <span class="id">string_scope</span>.<br/>
+<span class="kwd">Local</span> <span class="kwd">Open</span> <span class="kwd">Scope</span> <span class="id">Z_scope</span>.<br/>
+<br/>
+<h1> 4.  Program logics: Hoare logic </h1>
+<br/>
+<h2> 4.1.  Prelude: direct verification of a program </h2>
+<br/>
+<div class="doc">We can verify the correctness of a program using nothing but an
+    operational semantics for the language in which it is written.
+    For example, here is an IMP program that exchanges the values of
+    two variables. </div>
+ <span class="kwd">Definition</span> <span class="id"><a name="swap_xy">swap_xy</a></span> := <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> "<span class="id">t</span>" (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">x</span>");;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> "<span class="id">x</span>" (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">y</span>");; <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> "<span class="id">y</span>" (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">t</span>").<br/>
+<br/>
+<div class="doc">We can characterize the expected behavior of the program as
+    follows: started in a store <span class="bracket"><span class="id">s</span></span>, the program always terminates, in
+    a store <span class="bracket"><span class="id">s</span>'</span> where <span class="bracket">"<span class="id">x</span>"</span> has value <span class="bracket"><span class="id">s</span> "<span class="id">y</span>"</span> and <span class="bracket">"<span class="id">y</span>"</span> has value <span class="bracket"><span class="id">s</span>
+    "<span class="id">x</span>"</span>. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="swap_xy_correct">swap_xy_correct</a></span>: <span class="kwd">forall</span> <span class="id">s</span>, <span class="id">exists</span> <span class="id">s</span>', <span class="id"><a href="CDF.Sequences.html#star">star</a></span> <span class="tactic">red</span> (<span class="id"><a href="CDF.HoareLogic.html#swap_xy">swap_xy</a></span>, <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span>)<br/>
+&nbsp;&nbsp;(<span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span>, <span class="id">s</span>') /\ <span class="id">s</span>' "<span class="id">x</span>" = <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">y</span>" /\ <span class="id">s</span>' "<span class="id">y</span>" = <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">x</span>".  <span class="kwd">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">econstructor</span>; <span class="tactic">split</span>.  - <span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_step">star_step</a></span>. <span class="tactic">apply</span><br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#red_seq_step">red_seq_step</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_assign">red_assign</a></span>.  <span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_step">star_step</a></span>. <span class="tactic">apply</span><br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#red_seq_done">red_seq_done</a></span>.  <span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_step">star_step</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_seq_step">red_seq_step</a></span>. <span class="tactic">apply</span><br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#red_assign">red_assign</a></span>.  <span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_step">star_step</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_seq_done">red_seq_done</a></span>.  <span class="tactic">eapply</span><br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Sequences.html#star_step">star_step</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_assign">red_assign</a></span>.  <span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#star_refl">star_refl</a></span>.  - <span class="tactic">unfold</span> <span class="id"><a href="CDF.IMP.html#update">update</a></span>;<br/>
+&nbsp;&nbsp;<span class="id">cbn</span>. <span class="tactic">auto</span>.  Qed.</div>
+<br/>
+<div class="doc">The proof script is long but not difficult.  First, we perform a
+    "symbolic execution" of the program by chaining reduction steps.
+    This determines the final store <span class="bracket"><span class="id">s</span>'</span>, which is easily shown
+    to satisfy the expected property. </div>
+<br/>
+<div class="doc">Here is a more complicated example, involving a loop.
+    The program adds <span class="bracket">"<span class="id">x</span>"</span> to <span class="bracket">"<span class="id">y</span>"</span> by incrementing <span class="bracket">"<span class="id">y</span>"</span> and
+    decrementing <span class="bracket">"<span class="id">x</span>"</span> until <span class="bracket">"<span class="id">x</span>"</span> drops to zero. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="slow_add">slow_add</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> (<span class="id"><a href="CDF.IMP.html#LESSEQUAL">LESSEQUAL</a></span> (<span class="id"><a href="CDF.IMP.html#CONST">CONST</a></span> 1) (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">x</span>"))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> "<span class="id">x</span>" (<span class="id"><a href="CDF.IMP.html#MINUS">MINUS</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">x</span>") (<span class="id"><a href="CDF.IMP.html#CONST">CONST</a></span> 1)) ;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> "<span class="id">y</span>" (<span class="id"><a href="CDF.IMP.html#PLUS">PLUS</a></span>  (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">y</span>") (<span class="id"><a href="CDF.IMP.html#CONST">CONST</a></span> 1))).<br/>
+<br/>
+<div class="doc">The statement of correctness for this program remains simple. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="slow_add_correct">slow_add_correct</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">x</span>" &gt;= 0 -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s</span>', <span class="id"><a href="CDF.Sequences.html#star">star</a></span> <span class="tactic">red</span> (<span class="id"><a href="CDF.HoareLogic.html#slow_add">slow_add</a></span>, <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span>) (<span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span>, <span class="id">s</span>') /\ <span class="id">s</span>' "<span class="id">y</span>" = <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">y</span>" + <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">x</span>".<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof173')">Proof.</div>
+<div class="proofscript" id="proof173">
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">REC</span>: <span class="kwd">forall</span> <span class="id">v</span>, 0 &lt;= <span class="id"><a href="CDF.HoareLogic.html#v">v</a></span> -&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span>, <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">x</span>" = <span class="id"><a href="CDF.HoareLogic.html#v">v</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s</span>', <span class="id"><a href="CDF.Sequences.html#star">star</a></span> <span class="tactic">red</span> (<span class="id"><a href="CDF.HoareLogic.html#slow_add">slow_add</a></span>, <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span>) (<span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span>, <span class="id">s</span>') /\ <span class="id">s</span>' "<span class="id">y</span>" = <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">y</span>" + <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">x</span>").<br/>
+&nbsp;&nbsp;{ <span class="tactic">intros</span> <span class="id">v0</span> <span class="id">v0POS</span>. <span class="tactic">pattern</span> <span class="id">v0</span>. <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.Wf_Z.html#natlike_ind">natlike_ind</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;- <span class="tactic">intros</span>. <span class="id">exists</span> <span class="id">s</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#star_one">star_one</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_while_done">red_while_done</a></span>. <span class="id">cbn</span>. <span class="tactic">rewrite</span> <span class="id">H</span>. <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.BinInt.html#Z.leb_nle">Z.leb_nle</a></span>. <span class="id">lia</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id">lia</span>.<br/>
+&nbsp;&nbsp;- <span class="tactic">intros</span> <span class="id">v</span> <span class="id">VPOS</span> <span class="id">REC</span> <span class="id">s</span> <span class="id">EQ</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">s1</span> := <span class="id"><a href="CDF.IMP.html#update">update</a></span> "<span class="id">x</span>" <span class="id">v</span> <span class="id">s</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">s2</span> := <span class="id"><a href="CDF.IMP.html#update">update</a></span> "<span class="id">y</span>" (<span class="id">s</span> "<span class="id">y</span>" + 1) <span class="id">s1</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">REC</span> <span class="id">s2</span>) <span class="kwd">as</span> (<span class="id">s</span>' &amp; <span class="id">REDS</span> &amp; <span class="id">EQ</span>'). <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s</span>'; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_step">star_step</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_while_loop">red_while_loop</a></span>. <span class="id">cbn</span>. <span class="tactic">rewrite</span> <span class="id">EQ</span>. <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.BinInt.html#Z.leb_le">Z.leb_le</a></span>. <span class="id">lia</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_step">star_step</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_seq_step">red_seq_step</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_seq_step">red_seq_step</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_assign">red_assign</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_step">star_step</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_seq_step">red_seq_step</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_seq_done">red_seq_done</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_step">star_step</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_seq_step">red_seq_step</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_assign">red_assign</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_step">star_step</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_seq_done">red_seq_done</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">cbn</span>. <span class="tactic">replace</span> (<span class="id">s</span> "<span class="id">x</span>" - 1) <span class="kwd">with</span> <span class="id">v</span> <span class="tactic">by</span> <span class="id">lia</span>. <span class="tactic">apply</span> <span class="id">REDS</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="tactic">rewrite</span> <span class="id">EQ</span>'. <span class="id">cbn</span>. <span class="id">lia</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id">REC</span>; <span class="tactic">eauto</span>. <span class="id">lia</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">The proof, however, is rather difficult.  We need to perform
+    an explicit induction on the value <span class="bracket"><span class="id">v</span></span> of variable <span class="bracket">"<span class="id">x</span>"</span>.
+    To use the induction hypothesis, we must manually determine
+    some of the intermediate stores: purely symbolic execution
+    no longer suffices.  It is inconceivable to verify much more
+    complex programs with these techniques! </div>
+<br/>
+<div class="doc">Program logics provide higher-level reasoning principles to formally
+    verify programs.  In particular, they provide ways to reason about
+    loops without setting up a full proof by induction. </div>
+<br/>
+<div class="doc">The most familiar program logic is Hoare logic.  In this module,
+    we build a Hoare logic to reason about programs written in IMP. </div>
+<br/>
+<h2> 4.2.  Assertions on the values of variables </h2>
+<br/>
+<div class="doc">Hoare logic manipulates formulas / claims / assertions that "talk about"
+    the values of the program variables.  A typical assertion is
+    <span class="bracket">0 &lt;= <span class="id">x</span> /\ <span class="id">x</span> &lt;= <span class="id">y</span></span>, meaning "at this program point, the value of 
+    variable <span class="bracket"><span class="id">x</span></span> is positive and less than or equal to the value of
+    variable <span class="bracket"><span class="id">y</span></span>". </div>
+<br/>
+<div class="doc">In our Coq development, we represent assertions by Coq logical formulas
+    (type <span class="bracket"><span class="kwd">Prop</span></span>) parameterized by the current store, which provides
+    the values of the variables.
+  
+    For example, the assertion <span class="bracket">0 &lt;= <span class="id">x</span> /\ <span class="id">x</span> &lt;= <span class="id">y</span></span> above is represented
+    by the Coq predicate <span class="bracket"><span class="kwd">fun</span> <span class="id">s</span> =&gt; 0 &lt;= <span class="id">s</span> "<span class="id">x</span>" /\ <span class="id">s</span> "<span class="id">x</span>" &lt;= <span class="id">s</span> "<span class="id">y</span>"</span>. </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="assertion">assertion</a></span> : <span class="kwd">Type</span> := <span class="id"><a href="CDF.IMP.html#store">store</a></span> -&gt; <span class="kwd">Prop</span>.<br/>
+<br/>
+<div class="doc">Here are some useful assertions.
+    Conjunction and disjunction of two assertions. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="aand">aand</a></span> (<span class="id">P</span> <span class="id">Q</span>: <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span>) : <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">s</span> =&gt; <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> /\ <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="aor">aor</a></span> (<span class="id">P</span> <span class="id">Q</span>: <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span>) : <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">s</span> =&gt; <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> \/ <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span>.<br/>
+<br/>
+<div class="doc">The assertion "arithmetic expression <span class="bracket"><span class="id">a</span></span> evaluates to value <span class="bracket"><span class="id">v</span></span>". </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="aequal">aequal</a></span> (<span class="id">a</span>: <span class="id"><a href="CDF.IMP.html#aexp">aexp</a></span>) (<span class="id">v</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span>) : <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">s</span> =&gt; <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id"><a href="CDF.HoareLogic.html#a">a</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> = <span class="id"><a href="CDF.HoareLogic.html#v">v</a></span>.<br/>
+<br/>
+<div class="doc">The assertions "Boolean expression <span class="bracket"><span class="id">b</span></span> evaluates to true / to false". </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="atrue">atrue</a></span> (<span class="id">b</span>: <span class="id"><a href="CDF.IMP.html#bexp">bexp</a></span>) : <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">s</span> =&gt; <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="afalse">afalse</a></span> (<span class="id">b</span>: <span class="id"><a href="CDF.IMP.html#bexp">bexp</a></span>) : <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">s</span> =&gt; <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span>.<br/>
+<br/>
+<div class="doc">The assertion written "<span class="bracket"> <span class="id">P</span>[<span class="id">x</span> &lt;- <span class="id">a</span>] </span>" in the literature.
+    Substituting <span class="bracket"><span class="id">a</span></span> for <span class="bracket"><span class="id">x</span></span> in <span class="bracket"><span class="id">P</span></span> amounts to evaluating <span class="bracket"><span class="id">P</span></span> in
+    stores where the variable <span class="bracket"><span class="id">x</span></span> is equal to the value of expression <span class="bracket"><span class="id">a</span></span>. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="aupdate">aupdate</a></span> (<span class="id">x</span>: <span class="id"><a href="CDF.IMP.html#ident">ident</a></span>) (<span class="id">a</span>: <span class="id"><a href="CDF.IMP.html#aexp">aexp</a></span>) (<span class="id">P</span>: <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span>) : <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">s</span> =&gt; <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> (<span class="id"><a href="CDF.IMP.html#update">update</a></span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span> (<span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id"><a href="CDF.HoareLogic.html#a">a</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span>) <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span>).<br/>
+<br/>
+<div class="doc">Pointwise implication.  Unlike conjunction and disjunction, this is
+    not a predicate over the store, just a Coq proposition. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="aimp">aimp</a></span> (<span class="id">P</span> <span class="id">Q</span>: <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span>, <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> -&gt; <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span>.<br/>
+<br/>
+<div class="doc">A few notations to improve legibility. </div>
+<br/>
+<span class="kwd">Notation</span> "<span class="id">P</span> --&gt;&gt; <span class="id">Q</span>" := (<span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span> <span class="id">P</span> <span class="id">Q</span>) (<span class="tactic">at</span> <span class="id">level</span> 95, <span class="id">no</span> <span class="id">associativity</span>).<br/>
+<span class="kwd">Notation</span> "<span class="id">P</span> //\\ <span class="id">Q</span>" := (<span class="id"><a href="CDF.HoareLogic.html#aand">aand</a></span> <span class="id">P</span> <span class="id">Q</span>) (<span class="tactic">at</span> <span class="id">level</span> 80, <span class="id">right</span> <span class="id">associativity</span>).<br/>
+<span class="kwd">Notation</span> "<span class="id">P</span> \\// <span class="id">Q</span>" := (<span class="id"><a href="CDF.HoareLogic.html#aor">aor</a></span> <span class="id">P</span> <span class="id">Q</span>) (<span class="tactic">at</span> <span class="id">level</span> 75, <span class="id">right</span> <span class="id">associativity</span>).<br/>
+<br/>
+<h2> 4.3.  The rules of weak Hoare logic </h2>
+<br/>
+<div class="doc">Here are the base rules for Hoare logic.
+    They define a relation <span class="bracket"><span class="id">Hoare</span> <span class="id">P</span> <span class="id">c</span> <span class="id">Q</span></span>, where
+<ul>
+<li>
+   <span class="bracket"><span class="id">P</span></span> is the precondition, assumed to hold "before" executing <span class="bracket"><span class="id">c</span></span>;
+</li>
+<li>
+   <span class="bracket"><span class="id">c</span></span> is the program or program fragment we reason about;
+</li>
+<li>
+   <span class="bracket"><span class="id">Q</span></span> is the postcondition, guaranteed to hold "after" executing <span class="bracket"><span class="id">c</span></span>.
+</li>
+</ul>
+  This is a "weak" logic, meaning that it does not guarantee termination
+  of the command <span class="bracket"><span class="id">c</span></span>.  What is guaranteed is that if <span class="bracket"><span class="id">c</span></span> terminates,
+  then its final store satisfies postcondition <span class="bracket"><span class="id">Q</span></span>. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="Hoare">Hoare</a></span>: <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span> -&gt; <span class="id"><a href="CDF.IMP.html#com">com</a></span> -&gt; <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id"><a name="Hoare_skip">Hoare_skip</a></span>: <span class="kwd">forall</span> <span class="id">P</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="Hoare_assign">Hoare_assign</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">x</span> <span class="id">a</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> (<span class="id"><a href="CDF.HoareLogic.html#aupdate">aupdate</a></span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span> <span class="id"><a href="CDF.HoareLogic.html#a">a</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>) (<span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span> <span class="id"><a href="CDF.HoareLogic.html#a">a</a></span>) <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="Hoare_seq">Hoare_seq</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">Q</span> <span class="id">R</span> <span class="id">c1</span> <span class="id">c2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.HoareLogic.html#c1">c1</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> <span class="id"><a href="CDF.HoareLogic.html#c2">c2</a></span> <span class="id"><a href="CDF.HoareLogic.html#R">R</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> (<span class="id"><a href="CDF.HoareLogic.html#c1">c1</a></span>;;<span class="id"><a href="CDF.HoareLogic.html#c2">c2</a></span>) <span class="id"><a href="CDF.HoareLogic.html#R">R</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="Hoare_ifthenelse">Hoare_ifthenelse</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">Q</span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> (<span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>) <span class="id"><a href="CDF.HoareLogic.html#c1">c1</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> (<span class="id"><a href="CDF.HoareLogic.html#afalse">afalse</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>) <span class="id"><a href="CDF.HoareLogic.html#c2">c2</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> (<span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> <span class="id"><a href="CDF.HoareLogic.html#c1">c1</a></span> <span class="id"><a href="CDF.HoareLogic.html#c2">c2</a></span>) <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="Hoare_while">Hoare_while</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">b</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> (<span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>) <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span>) (<span class="id"><a href="CDF.HoareLogic.html#afalse">afalse</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a name="Hoare_consequence">Hoare_consequence</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">Q</span> <span class="id">P</span>' <span class="id">Q</span>' <span class="id">c</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">P</span>' --&gt;&gt; <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> --&gt;&gt; <span class="id">Q</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> <span class="id">P</span>' <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id">Q</span>'.<br/>
+<br/>
+<div class="doc">Some derived rules. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="Hoare_consequence_pre">Hoare_consequence_pre</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">P</span>' <span class="id">Q</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">P</span>' --&gt;&gt; <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> <span class="id">P</span>' <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof174')">Proof.</div>
+<div class="proofscript" id="proof174">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_consequence">Hoare_consequence</a></span> <span class="kwd">with</span> (<span class="id">P</span> := <span class="id">P</span>) (<span class="id">Q</span> := <span class="id">Q</span>); <span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="Hoare_consequence_post">Hoare_consequence_post</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">Q</span> <span class="id">Q</span>' <span class="id">c</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> --&gt;&gt; <span class="id">Q</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id">Q</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof175')">Proof.</div>
+<div class="proofscript" id="proof175">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_consequence">Hoare_consequence</a></span> <span class="kwd">with</span> (<span class="id">P</span> := <span class="id">P</span>) (<span class="id">Q</span> := <span class="id">Q</span>); <span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="Hoare_ifthen">Hoare_ifthen</a></span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">c</span> <span class="id">P</span> <span class="id">Q</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> (<span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>) <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#afalse">afalse</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> --&gt;&gt; <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> (<span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span>) <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof176')">Proof.</div>
+<div class="proofscript" id="proof176">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_ifthenelse">Hoare_ifthenelse</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_consequence_pre">Hoare_consequence_pre</a></span> <span class="kwd">with</span> <span class="id">Q</span>; <span class="tactic">auto</span> <span class="kwd">using</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_skip">Hoare_skip</a></span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">An example of a derivation in Hoare logic. </div>
+<br/>
+<span class="kwd">Example</span> <span class="id"><a name="Hoare_swap_xy">Hoare_swap_xy</a></span>: <span class="kwd">forall</span> <span class="id">m</span> <span class="id">n</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> (<span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">x</span>") <span class="id"><a href="CDF.HoareLogic.html#m">m</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">y</span>") <span class="id"><a href="CDF.HoareLogic.html#n">n</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#swap_xy">swap_xy</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">x</span>") <span class="id"><a href="CDF.HoareLogic.html#n">n</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">y</span>") <span class="id"><a href="CDF.HoareLogic.html#m">m</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof177')">Proof.</div>
+<div class="proofscript" id="proof177">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_consequence_pre">Hoare_consequence_pre</a></span>.<br/>
+- <span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#swap_xy">swap_xy</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_seq">Hoare_seq</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_assign">Hoare_assign</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_seq">Hoare_seq</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_assign">Hoare_assign</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_assign">Hoare_assign</a></span>.<br/>
+- <span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aupdate">aupdate</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aand">aand</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>; <span class="id">cbn</span>. <span class="tactic">tauto</span>.<br/>
+Qed.</div>
+<br/>
+<h3> Exercise (2 stars) </h3>
+<div class="doc">Here is another way to exchange the values of two variables,
+    without using a third, temporary variable. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="swap_xy_2">swap_xy_2</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> "<span class="id">x</span>" (<span class="id"><a href="CDF.IMP.html#PLUS">PLUS</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">x</span>") (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">y</span>")) ;;<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> "<span class="id">y</span>" (<span class="id"><a href="CDF.IMP.html#MINUS">MINUS</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">x</span>") (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">y</span>")) ;;<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> "<span class="id">x</span>" (<span class="id"><a href="CDF.IMP.html#MINUS">MINUS</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">x</span>") (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">y</span>")).<br/>
+<br/>
+<div class="doc">Prove that this program satisfies the same property as <span class="bracket"><span class="id">swap_xy</span></span>.
+    Hint: rework the proof script for <span class="bracket"><span class="id">Hoare_swap_xy</span></span>, only minimal
+    changes need to be made. </div>
+<br/>
+<span class="kwd">Example</span> <span class="id"><a name="Hoare_swap_xy_2">Hoare_swap_xy_2</a></span>: <span class="kwd">forall</span> <span class="id">m</span> <span class="id">n</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> (<span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">x</span>") <span class="id"><a href="CDF.HoareLogic.html#m">m</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">y</span>") <span class="id"><a href="CDF.HoareLogic.html#n">n</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#swap_xy_2">swap_xy_2</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">x</span>") <span class="id"><a href="CDF.HoareLogic.html#n">n</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">y</span>") <span class="id"><a href="CDF.HoareLogic.html#m">m</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof178')">Proof.</div>
+<div class="proofscript" id="proof178">
+&nbsp;&nbsp;<span class="comment">(*&nbsp;FILL&nbsp;IN&nbsp;HERE&nbsp;*)</span><br/>
+Admitted.</div>
+<br/>
+<h2> 4.4.  Soundness of Hoare logic </h2>
+<br/>
+<div class="doc">We give a semantic interpretation to the statements <span class="bracket"><span class="id">Hoare</span> <span class="id">P</span> <span class="id">c</span> <span class="id">Q</span></span>
+    of Hoare logic.  The interpretation is the relation <span class="bracket"><span class="id">triple</span> <span class="id">P</span> <span class="id">c</span> <span class="id">Q</span></span>
+    defined below in terms of IMP's natural semantics
+    (the relation <span class="bracket"><span class="id">cexec</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>'</span>). </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="triple">triple</a></span> (<span class="id">P</span>: <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span>) (<span class="id">c</span>: <span class="id"><a href="CDF.IMP.html#com">com</a></span>) (<span class="id">Q</span>: <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id">s</span>' -&gt; <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> -&gt; <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> <span class="id">s</span>'.<br/>
+<br/>
+<span class="kwd">Notation</span> "{{ <span class="id">P</span> }} <span class="id">c</span> {{ <span class="id">Q</span> }}" := (<span class="id"><a href="CDF.HoareLogic.html#triple">triple</a></span> <span class="id">P</span> <span class="id">c</span> <span class="id">Q</span>) (<span class="tactic">at</span> <span class="id">level</span> 90, <span class="id">c</span> <span class="tactic">at</span> <span class="id">next</span> <span class="id">level</span>).<br/>
+<br/>
+<div class="doc">The semantic interpretation validates every rule of Hoare logic. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="triple_skip">triple_skip</a></span>: <span class="kwd">forall</span> <span class="id">P</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}} <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof179')">Proof.</div>
+<div class="proofscript" id="proof179">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#triple">triple</a></span>; <span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="triple_assign">triple_assign</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">x</span> <span class="id">a</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{<span class="id"><a href="CDF.HoareLogic.html#aupdate">aupdate</a></span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span> <span class="id"><a href="CDF.HoareLogic.html#a">a</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}} <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span> <span class="id"><a href="CDF.HoareLogic.html#a">a</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof180')">Proof.</div>
+<div class="proofscript" id="proof180">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#triple">triple</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aupdate">aupdate</a></span>; <span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="triple_seq">triple_seq</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">Q</span> <span class="id">R</span> <span class="id">c1</span> <span class="id">c2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c1">c1</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>}} -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c2">c2</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#R">R</a></span>}} -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c1">c1</a></span>;;<span class="id"><a href="CDF.HoareLogic.html#c2">c2</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#R">R</a></span>}}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof181')">Proof.</div>
+<div class="proofscript" id="proof181">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#triple">triple</a></span>; <span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">subst</span>. <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="triple_ifthenelse">triple_ifthenelse</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">Q</span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{<span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c1">c1</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>}} -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{<span class="id"><a href="CDF.HoareLogic.html#afalse">afalse</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c2">c2</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>}} -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}} <span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> <span class="id"><a href="CDF.HoareLogic.html#c1">c1</a></span> <span class="id"><a href="CDF.HoareLogic.html#c2">c2</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>}}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof182')">Proof.</div>
+<div class="proofscript" id="proof182">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#triple">triple</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aand">aand</a></span>, <span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span>, <span class="id"><a href="CDF.HoareLogic.html#afalse">afalse</a></span>; <span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>) <span class="id">eqn</span>:<span class="id">B</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="triple_while">triple_while</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">b</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{<span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}} -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}} <span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#afalse">afalse</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof183')">Proof.</div>
+<div class="proofscript" id="proof183">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#triple">triple</a></span>; <span class="tactic">intros</span> <span class="id">P</span> <span class="id">b</span> <span class="id">c</span> <span class="id">T</span> <span class="id">s</span> <span class="id">s</span>' <span class="id">E</span>. <span class="tactic">dependent</span> <span class="tactic">induction</span> <span class="id">E</span>; <span class="tactic">intros</span>.<br/>
+- <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">eapply</span> <span class="id">IHE2</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">T</span> <span class="kwd">with</span> <span class="id">s</span>; <span class="tactic">auto</span>. <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="triple_consequence">triple_consequence</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">Q</span> <span class="id">P</span>' <span class="id">Q</span>' <span class="id">c</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>}} -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">P</span>' --&gt;&gt; <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> --&gt;&gt; <span class="id">Q</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{<span class="id">P</span>'}} <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id">Q</span>'}}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof184')">Proof.</div>
+<div class="proofscript" id="proof184">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#triple">triple</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>; <span class="tactic">intros</span>. <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">It follows that Hoare logic is sound: every triple derivable by the
+    rules of the logic is semantically valid. </div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id"><a name="Hoare_sound">Hoare_sound</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">P</span> <span class="id">c</span> <span class="id">Q</span>, <span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> -&gt; {{<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>}}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof185')">Proof.</div>
+<div class="proofscript" id="proof185">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">eauto</span> <span class="kwd">using</span> <span class="id"><a href="CDF.HoareLogic.html#triple_skip">triple_skip</a></span>, <span class="id"><a href="CDF.HoareLogic.html#triple_assign">triple_assign</a></span>, <span class="id"><a href="CDF.HoareLogic.html#triple_seq">triple_seq</a></span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#triple_ifthenelse">triple_ifthenelse</a></span>, <span class="id"><a href="CDF.HoareLogic.html#triple_while">triple_while</a></span>, <span class="id"><a href="CDF.HoareLogic.html#triple_consequence">triple_consequence</a></span>.<br/>
+Qed.</div>
+<br/>
+<h2> 4.5.  Completeness of Hoare logic </h2>
+<br/>
+<div class="doc">The converse of theorem <span class="bracket"><span class="id">Hoare_sound</span></span> is true: a "Hoare triple"
+    that holds semantically (<span class="bracket">{{<span class="id">P</span>}} <span class="id">c</span> {{<span class="id">Q</span>}}</span>) can always be derived
+    using the rules of the logic (<span class="bracket"><span class="id">Hoare</span> <span class="id">P</span> <span class="id">c</span> <span class="id">Q</span></span>).  The proof relies
+    on the notion of "weakest precondition" (WP). </div>
+<br/>
+<div class="doc">The weakest precondition for a command <span class="bracket"><span class="id">c</span></span> with postcondition <span class="bracket"><span class="id">Q</span></span>. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="wp">wp</a></span> (<span class="id">c</span>: <span class="id"><a href="CDF.IMP.html#com">com</a></span>) (<span class="id">Q</span>: <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span>) : <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">s</span> =&gt; <span class="kwd">forall</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id">s</span>' -&gt; <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> <span class="id">s</span>'.<br/>
+<br/>
+<div class="doc">The WP is a precondition. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="wp_precondition">wp_precondition</a></span>: <span class="kwd">forall</span> <span class="id">c</span> <span class="id">Q</span>, {{<span class="id"><a href="CDF.HoareLogic.html#wp">wp</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>}}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof186')">Proof.</div>
+<div class="proofscript" id="proof186">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#triple">triple</a></span>, <span class="id"><a href="CDF.HoareLogic.html#wp">wp</a></span>; <span class="tactic">intros</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">The WP is the weakest of all preconditions:
+    any other precondition implies the WP. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="wp_weakest">wp_weakest</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">c</span> <span class="id">Q</span>, {{<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>}} -&gt; <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> --&gt;&gt; <span class="id"><a href="CDF.HoareLogic.html#wp">wp</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof187')">Proof.</div>
+<div class="proofscript" id="proof187">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#triple">triple</a></span>, <span class="id"><a href="CDF.HoareLogic.html#wp">wp</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>; <span class="tactic">intros</span>. <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">The rules of Hoare logic are powerful enough to derive the fact
+    that <span class="bracket"><span class="id">wp</span> <span class="id">c</span> <span class="id">Q</span></span> is a valid precondition for <span class="bracket"><span class="id">c</span></span> and <span class="bracket"><span class="id">Q</span></span>. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="Hoare_wp">Hoare_wp</a></span>: <span class="kwd">forall</span> <span class="id">c</span> <span class="id">Q</span>, <span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> (<span class="id"><a href="CDF.HoareLogic.html#wp">wp</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>) <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof188')">Proof.</div>
+<div class="proofscript" id="proof188">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">c</span>; <span class="tactic">intros</span> <span class="id">Q</span>.<br/>
+- <span class="comment">(*&nbsp;SKIP&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_consequence_pre">Hoare_consequence_pre</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_skip">Hoare_skip</a></span>. <br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>, <span class="id"><a href="CDF.HoareLogic.html#wp">wp</a></span>; <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_skip">cexec_skip</a></span>.<br/>
+- <span class="comment">(*&nbsp;ASSIGN&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_consequence_pre">Hoare_consequence_pre</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_assign">Hoare_assign</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aupdate">aupdate</a></span>, <span class="id"><a href="CDF.HoareLogic.html#wp">wp</a></span>; <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_assign">cexec_assign</a></span>.<br/>
+- <span class="comment">(*&nbsp;SEQ&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_consequence_pre">Hoare_consequence_pre</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_seq">Hoare_seq</a></span> <span class="kwd">with</span> (<span class="id"><a href="CDF.HoareLogic.html#wp">wp</a></span> <span class="id">c2</span> <span class="id">Q</span>); <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>, <span class="id"><a href="CDF.HoareLogic.html#wp">wp</a></span>; <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_seq">cexec_seq</a></span> <span class="kwd">with</span> <span class="id">s</span>'; <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;IFTHENELSE&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_ifthenelse">Hoare_ifthenelse</a></span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_consequence_pre">Hoare_consequence_pre</a></span>. <span class="tactic">apply</span> <span class="id">IHc1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aand">aand</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>, <span class="id"><a href="CDF.HoareLogic.html#wp">wp</a></span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">H1</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_ifthenelse">cexec_ifthenelse</a></span>. <span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_consequence_pre">Hoare_consequence_pre</a></span>. <span class="tactic">apply</span> <span class="id">IHc2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#afalse">afalse</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aand">aand</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>, <span class="id"><a href="CDF.HoareLogic.html#wp">wp</a></span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">H1</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_ifthenelse">cexec_ifthenelse</a></span>. <span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;WHILE&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_consequence_post">Hoare_consequence_post</a></span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_while">Hoare_while</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_consequence_pre">Hoare_consequence_pre</a></span>. <span class="tactic">apply</span> <span class="id">IHc</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aand">aand</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>, <span class="id"><a href="CDF.HoareLogic.html#wp">wp</a></span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">H2</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_while_loop">cexec_while_loop</a></span> <span class="kwd">with</span> <span class="id">s</span>'; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#afalse">afalse</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aand">aand</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>, <span class="id"><a href="CDF.HoareLogic.html#wp">wp</a></span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_while_done">cexec_while_done</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">It follows that any semantically valid triple <span class="bracket">{{<span class="id">P</span>}} <span class="id">c</span> {{<span class="id">Q</span>}}</span>
+    can be derived by Hoare's rules. </div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id"><a name="Hoare_complete">Hoare_complete</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">c</span> <span class="id">Q</span>, {{<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>}} -&gt; <span class="id"><a href="CDF.HoareLogic.html#Hoare">Hoare</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof189')">Proof.</div>
+<div class="proofscript" id="proof189">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_consequence_pre">Hoare_consequence_pre</a></span> <span class="kwd">with</span> (<span class="id"><a href="CDF.HoareLogic.html#wp">wp</a></span> <span class="id">c</span> <span class="id">Q</span>). <br/>
+- <span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#Hoare_wp">Hoare_wp</a></span>.<br/>
+- <span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#wp_weakest">wp_weakest</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<h2> 4.6.  Other useful rules </h2>
+<br/>
+<div class="doc">Using the semantic definition of Hoare triples, it is easy to add
+    new reasoning rules: these are just lemmas about the operational
+    semantics that we prove once and for all.  For example: </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="triple_conj">triple_conj</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">P1</span> <span class="id">Q1</span> <span class="id">P2</span> <span class="id">Q2</span>,<br/>
+&nbsp;&nbsp;{{<span class="id"><a href="CDF.HoareLogic.html#P1">P1</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q1">Q1</a></span>}} -&gt; {{<span class="id"><a href="CDF.HoareLogic.html#P2">P2</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q2">Q2</a></span>}} -&gt; {{<span class="id"><a href="CDF.HoareLogic.html#P1">P1</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#P2">P2</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q1">Q1</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#Q2">Q2</a></span>}}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof190')">Proof.</div>
+<div class="proofscript" id="proof190">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H2</span> <span class="kwd">as</span> [<span class="id">PRE1</span> <span class="id">PRE2</span>]. <span class="tactic">split</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="triple_disj">triple_disj</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">P1</span> <span class="id">Q1</span> <span class="id">P2</span> <span class="id">Q2</span>,<br/>
+&nbsp;&nbsp;{{<span class="id"><a href="CDF.HoareLogic.html#P1">P1</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q1">Q1</a></span>}} -&gt; {{<span class="id"><a href="CDF.HoareLogic.html#P2">P2</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q2">Q2</a></span>}} -&gt; {{<span class="id"><a href="CDF.HoareLogic.html#P1">P1</a></span> \\// <span class="id"><a href="CDF.HoareLogic.html#P2">P2</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q1">Q1</a></span> \\// <span class="id"><a href="CDF.HoareLogic.html#Q2">Q2</a></span>}}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof191')">Proof.</div>
+<div class="proofscript" id="proof191">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H2</span> <span class="kwd">as</span> [<span class="id">PRE1</span>|<span class="id">PRE2</span>]; [<span class="id">left</span>|<span class="id">right</span>]; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">We can also give an alternate rule to reason about assignments.
+    The alternate rule is a "forward" rule (the postcondition is
+    determined by the precondition), unlike Hoare's rule which is "backward". </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="aexists">aexists</a></span> {<span class="id">A</span>: <span class="kwd">Type</span>} (<span class="id">P</span>: <span class="id"><a href="CDF.HoareLogic.html#A">A</a></span> -&gt; <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span>) : <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> (<span class="id">s</span>: <span class="id"><a href="CDF.IMP.html#store">store</a></span>) =&gt; <span class="id">exists</span> (<span class="id">a</span>: <span class="id"><a href="CDF.HoareLogic.html#A">A</a></span>), <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.HoareLogic.html#a">a</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="triple_assign_fwd">triple_assign_fwd</a></span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">a</span> <span class="id">P</span>,<br/>
+&nbsp;&nbsp;{{ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> }}<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span> <span class="id"><a href="CDF.HoareLogic.html#a">a</a></span> <br/>
+&nbsp;&nbsp;{{ <span class="id"><a href="CDF.HoareLogic.html#aexists">aexists</a></span> (<span class="kwd">fun</span> <span class="id">m</span> =&gt; <span class="id"><a href="CDF.HoareLogic.html#aexists">aexists</a></span> (<span class="kwd">fun</span> <span class="id">n</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span>) <span class="id"><a href="CDF.HoareLogic.html#n">n</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#aupdate">aupdate</a></span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span> (<span class="id"><a href="CDF.IMP.html#CONST">CONST</a></span> <span class="id"><a href="CDF.HoareLogic.html#m">m</a></span>) (<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span> <span class="id"><a href="CDF.HoareLogic.html#a">a</a></span> <span class="id"><a href="CDF.HoareLogic.html#n">n</a></span>))) }}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof192')">Proof.</div>
+<div class="proofscript" id="proof192">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#triple">triple</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aupdate">aupdate</a></span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">s</span> <span class="id">x</span>); <span class="id">exists</span> (<span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id">a</span> <span class="id">s</span>); <span class="id">cbn</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#update_same">update_same</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">replace</span> (<span class="id"><a href="CDF.IMP.html#update">update</a></span> <span class="id">x</span> (<span class="id">s</span> <span class="id">x</span>) (<span class="id"><a href="CDF.IMP.html#update">update</a></span> <span class="id">x</span> (<span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id">a</span> <span class="id">s</span>) <span class="id">s</span>)) <span class="kwd">with</span> <span class="id">s</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.FunctionalExtensionality.html#functional_extensionality">functional_extensionality</a></span>; <span class="tactic">intros</span> <span class="id">y</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.IMP.html#update">update</a></span>. <span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> <span class="id">x</span> <span class="id">y</span>); <span class="tactic">congruence</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Finally, we build a frame rule that makes it possible to reuse
+    an existing verification of <span class="bracket">{{<span class="id">P</span>} <span class="id">c</span> {{<span class="id">Q</span>}}</span>
+    and add extra facts <span class="bracket"><span class="id">R</span></span> to the precondition and the postcondition,
+    obtaining a verification of <span class="bracket">{{<span class="id">P</span> //\\ <span class="id">R</span>}} <span class="id">c</span> {{<span class="id">Q</span> //\\ <span class="id">R</span>}}</span>. </div>
+<br/>
+<div class="doc">For example: if we showed the correctness of <span class="bracket"><span class="id">swap_xy</span></span> like this
+<pre>
+    {{ aequal (VAR "x") m //\\ aequal (VAR "y") n }}
+    swap_xy
+    {{ aequal (VAR "x") n //\\ aequal (VAR "y") m }}</pre>
+    we should be able, without having to re-do the verification de <span class="bracket"><span class="id">swap_xy</span></span>,
+    to prove a more informative triple such as
+<pre>
+    {{ aequal (VAR "x") m //\\ aequal (VAR "y") n //\\ aequal (VAR "z") p }}
+    swap_xy
+    {{ aequal (VAR "x") n //\\ aequal (VAR "y") m //\\ aequal (VAR "z") p }}</pre>
+    to be read as: "furthermore, the value of variable <span class="bracket"><span class="id">z</span></span> is unchanged". </div>
+<br/>
+<div class="doc">This reasoning is valid provided the extra facts <span class="bracket"><span class="id">R</span></span> mention exclusively
+    variables that are not modified during the execution of <span class="bracket"><span class="id">c</span></span>.
+    We approximate this requirement by saying that variables that occur
+    as left-hand sides of an assignment in <span class="bracket"><span class="id">c</span></span> can be modified,
+    and other variables definitely cannot. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="modified_by">modified_by</a></span> (<span class="id">c</span>: <span class="id"><a href="CDF.IMP.html#com">com</a></span>) (<span class="id">x</span>: <span class="id"><a href="CDF.IMP.html#ident">ident</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id">y</span> <span class="id">a</span> =&gt; <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span> = <span class="id">y</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SEQ">SEQ</a></span> <span class="id">c1</span> <span class="id">c2</span> =&gt; <span class="id"><a href="CDF.HoareLogic.html#modified_by">modified_by</a></span> <span class="id">c1</span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span> \/ <span class="id"><a href="CDF.HoareLogic.html#modified_by">modified_by</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span> =&gt; <span class="id"><a href="CDF.HoareLogic.html#modified_by">modified_by</a></span> <span class="id">c1</span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span> \/ <span class="id"><a href="CDF.HoareLogic.html#modified_by">modified_by</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c1</span> =&gt; <span class="id"><a href="CDF.HoareLogic.html#modified_by">modified_by</a></span> <span class="id">c1</span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="cexec_modified">cexec_modified</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span> <span class="id">s1</span> <span class="id">c</span> <span class="id">s2</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.HoareLogic.html#s1">s1</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#s2">s2</a></span> -&gt; ~<span class="id"><a href="CDF.HoareLogic.html#modified_by">modified_by</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span> -&gt; <span class="id"><a href="CDF.HoareLogic.html#s2">s2</a></span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span> = <span class="id"><a href="CDF.HoareLogic.html#s1">s1</a></span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof193')">Proof.</div>
+<div class="proofscript" id="proof193">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="id">cbn</span>; <span class="tactic">intros</span> <span class="id">MB</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="tactic">unfold</span> <span class="id"><a href="CDF.IMP.html#update">update</a></span>. <span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> <span class="id">x0</span> <span class="id">x</span>); <span class="tactic">congruence</span>.<br/>
+- <span class="tactic">rewrite</span> <span class="id">IHcexec2</span>, <span class="id">IHcexec1</span> <span class="tactic">by</span> <span class="tactic">tauto</span>. <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">IHcexec</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>); <span class="tactic">tauto</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="tactic">rewrite</span> <span class="id">IHcexec2</span>, <span class="id">IHcexec1</span> <span class="tactic">by</span> <span class="tactic">tauto</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Syntactically, an assertion <span class="bracket"><span class="id">P</span></span> is independent from a set <span class="bracket"><span class="id">vars</span></span> of
+    variables if none of the variables in <span class="bracket"><span class="id">vars</span></span> is mentioned in <span class="bracket"><span class="id">P</span></span>.
+    With out encoding of assertions as predicates <span class="bracket"><span class="id">store</span> -&gt; <span class="kwd">Prop</span></span>,
+    we cannot state the independence condition like this, since
+    the predicates are opaque functions.
+    Instead, we will say that the assertion has the same truth value
+    in any two stores <span class="bracket"><span class="id">s1</span></span> and <span class="bracket"><span class="id">s2</span></span> that differ only on the values of
+    the variables in set <span class="bracket"><span class="id">vars</span></span>. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="independent_of">independent_of</a></span> (<span class="id">P</span>: <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span>) (<span class="id">vars</span>: <span class="id"><a href="CDF.IMP.html#ident">ident</a></span> -&gt; <span class="kwd">Prop</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">s2</span>,<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">x</span>, ~ <span class="id"><a href="CDF.HoareLogic.html#vars">vars</a></span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span> -&gt; <span class="id"><a href="CDF.HoareLogic.html#s1">s1</a></span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span> = <span class="id"><a href="CDF.HoareLogic.html#s2">s2</a></span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span>) -&gt;<br/>
+&nbsp;&nbsp;(<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.HoareLogic.html#s1">s1</a></span> &lt;-&gt; <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.HoareLogic.html#s2">s2</a></span>).<br/>
+<br/>
+<div class="doc">In the end, we obtain the following frame rule. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="triple_frame">triple_frame</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">P</span> <span class="id">Q</span> <span class="id">R</span>,<br/>
+&nbsp;&nbsp;{{<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>}} -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#independent_of">independent_of</a></span> <span class="id"><a href="CDF.HoareLogic.html#R">R</a></span> (<span class="id"><a href="CDF.HoareLogic.html#modified_by">modified_by</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span>) -&gt;<br/>
+&nbsp;&nbsp;{{<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#R">R</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#R">R</a></span>}}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof194')">Proof.</div>
+<div class="proofscript" id="proof194">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H2</span> <span class="kwd">as</span> [<span class="id">PRE1</span> <span class="id">PRE2</span>]. <span class="tactic">split</span>.<br/>
+- <span class="tactic">eapply</span> <span class="id">H</span>; <span class="tactic">eauto</span>.<br/>
+- <span class="tactic">apply</span> (<span class="id">H0</span> <span class="id">s</span>' <span class="id">s</span>).<br/>
+&nbsp;&nbsp;+ <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#cexec_modified">cexec_modified</a></span> <span class="kwd">with</span> <span class="id">c</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<h2> 4.7.  Strong Hoare triples </h2>
+<br/>
+<div class="doc">The Hoare logic presented above is "weak" because it does not
+    guarantee program termination, and therefore can show partial
+    correctness results only. </div>
+<br/>
+<div class="doc">Following similar approaches, we now construct a "strong" Hoare logic
+    that guarantees termination and therefore proves total correctness
+    results. </div>
+<br/>
+<div class="doc">As we did for the weak logic, we could give the rules of the strong
+    logic as an inductive predicate, then interpret them semantically.
+    To simplify the presentation, we omit the inductive predicate
+    and define the "strong" logic directly from the operational semantics,
+    via the relation <span class="bracket"> [[<span class="id">P</span>]] <span class="id">c</span> [[<span class="id">Q</span>]] </span> below. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="Triple">Triple</a></span> (<span class="id">P</span>: <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span>) (<span class="id">c</span>: <span class="id"><a href="CDF.IMP.html#com">com</a></span>) (<span class="id">Q</span>: <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span>, <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> -&gt; <span class="id">exists</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id">s</span>' /\ <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> <span class="id">s</span>'.<br/>
+<br/>
+<span class="kwd">Notation</span> "[[ <span class="id">P</span> ]] <span class="id">c</span> [[ <span class="id">Q</span> ]]" := (<span class="id"><a href="CDF.HoareLogic.html#Triple">Triple</a></span> <span class="id">P</span> <span class="id">c</span> <span class="id">Q</span>) (<span class="tactic">at</span> <span class="id">level</span> 90, <span class="id">c</span> <span class="tactic">at</span> <span class="id">next</span> <span class="id">level</span>).<br/>
+<br/>
+<div class="doc">Note the difference with the weak logic:
+<ul>
+<li>
+   For the weak triple <span class="bracket"> {{<span class="id">P</span>}} <span class="id">c</span> {{<span class="id">Q</span>}} </span>, we conclude
+    "if <span class="bracket"><span class="id">c</span></span> terminates, then the final store <span class="bracket"><span class="id">s</span>'</span> satisfies <span class="bracket"><span class="id">Q</span></span>".
+</li>
+<li>
+   For the strong triple <span class="bracket"> [[<span class="id">P</span>]] <span class="id">c</span> [[<span class="id">Q</span>]] </span>, we conclude
+    "<span class="bracket"><span class="id">c</span></span> terminates and the final store <span class="bracket"><span class="id">s</span>'</span> satisfies <span class="bracket"><span class="id">Q</span></span>".
+</li>
+</ul>
+</div>
+<br/>
+<div class="doc">The base rules for the strong logic are the same as for the weak logic,
+    except for loops. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="Triple_skip">Triple_skip</a></span>: <span class="kwd">forall</span> <span class="id">P</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[[<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>]] <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> [[<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>]].<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof195')">Proof.</div>
+<div class="proofscript" id="proof195">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">P</span> <span class="id">s</span> <span class="id">PRE</span>. <span class="id">exists</span> <span class="id">s</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_skip">cexec_skip</a></span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="Triple_assign">Triple_assign</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">x</span> <span class="id">a</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[[<span class="id"><a href="CDF.HoareLogic.html#aupdate">aupdate</a></span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span> <span class="id"><a href="CDF.HoareLogic.html#a">a</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>]] <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id"><a href="CDF.HoareLogic.html#x">x</a></span> <span class="id"><a href="CDF.HoareLogic.html#a">a</a></span> [[<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>]].<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof196')">Proof.</div>
+<div class="proofscript" id="proof196">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">P</span> <span class="id">x</span> <span class="id">a</span> <span class="id">s</span> <span class="id">PRE</span>. <span class="id">exists</span> (<span class="id"><a href="CDF.IMP.html#update">update</a></span> <span class="id">x</span> (<span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id">a</span> <span class="id">s</span>) <span class="id">s</span>); <span class="tactic">split</span>.<br/>
+- <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_assign">cexec_assign</a></span>.<br/>
+- <span class="tactic">exact</span> <span class="id">PRE</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="Triple_seq">Triple_seq</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">Q</span> <span class="id">R</span> <span class="id">c1</span> <span class="id">c2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[[<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>]] <span class="id"><a href="CDF.HoareLogic.html#c1">c1</a></span> [[<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>]] -&gt; [[<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>]] <span class="id"><a href="CDF.HoareLogic.html#c2">c2</a></span> [[<span class="id"><a href="CDF.HoareLogic.html#R">R</a></span>]] -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[[<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>]] <span class="id"><a href="CDF.HoareLogic.html#c1">c1</a></span>;;<span class="id"><a href="CDF.HoareLogic.html#c2">c2</a></span> [[<span class="id"><a href="CDF.HoareLogic.html#R">R</a></span>]].<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof197')">Proof.</div>
+<div class="proofscript" id="proof197">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">intros</span> <span class="id">s</span> <span class="id">PRE</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">H</span> <span class="id">s</span> <span class="id">PRE</span>) <span class="kwd">as</span> (<span class="id">s1</span> &amp; <span class="id">EXEC1</span> &amp; <span class="id">MID</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">H0</span> <span class="id">s1</span> <span class="id">MID</span>) <span class="kwd">as</span> (<span class="id">s2</span> &amp; <span class="id">EXEC2</span> &amp; <span class="id">POST</span>).<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s2</span>; <span class="tactic">split</span>.<br/>
+- <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_seq">cexec_seq</a></span> <span class="kwd">with</span> <span class="id">s1</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">exact</span> <span class="id">POST</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="Triple_ifthenelse">Triple_ifthenelse</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">Q</span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[[<span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>]] <span class="id"><a href="CDF.HoareLogic.html#c1">c1</a></span> [[<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>]] -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[[<span class="id"><a href="CDF.HoareLogic.html#afalse">afalse</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>]] <span class="id"><a href="CDF.HoareLogic.html#c2">c2</a></span> [[<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>]] -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[[<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>]] <span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> <span class="id"><a href="CDF.HoareLogic.html#c1">c1</a></span> <span class="id"><a href="CDF.HoareLogic.html#c2">c2</a></span> [[<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>]].<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof198')">Proof.</div>
+<div class="proofscript" id="proof198">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">intros</span> <span class="id">s</span> <span class="id">PRE</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>) <span class="id">eqn</span>:<span class="id">B</span>.<br/>
+- <span class="tactic">destruct</span> (<span class="id">H</span> <span class="id">s</span>) <span class="kwd">as</span> (<span class="id">s</span>' &amp; <span class="id">EXEC</span> &amp; <span class="id">POST</span>). <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s</span>'; <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="id">constructor</span>; <span class="tactic">rewrite</span> <span class="id">B</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">destruct</span> (<span class="id">H0</span> <span class="id">s</span>) <span class="kwd">as</span> (<span class="id">s</span>' &amp; <span class="id">EXEC</span> &amp; <span class="id">POST</span>). <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s</span>'; <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="id">constructor</span>; <span class="tactic">rewrite</span> <span class="id">B</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="Triple_consequence">Triple_consequence</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">Q</span> <span class="id">P</span>' <span class="id">Q</span>' <span class="id">c</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[[<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>]] <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> [[<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>]] -&gt; <span class="id">P</span>' --&gt;&gt; <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> -&gt; <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> --&gt;&gt; <span class="id">Q</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[[<span class="id">P</span>']] <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> [[<span class="id">Q</span>']].<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof199')">Proof.</div>
+<div class="proofscript" id="proof199">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">intros</span> <span class="id">s</span> <span class="id">PRE</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">H</span> <span class="id">s</span>) <span class="kwd">as</span> (<span class="id">s</span>' &amp; <span class="id">EXEC</span> &amp; <span class="id">POST</span>). <span class="tactic">apply</span> <span class="id">H0</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s</span>'; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">For <span class="bracket"><span class="id">WHILE</span> <span class="id">b</span> <span class="id">c</span></span> loops, the strong triple must guarantee that the loop
+    terminates for all initial stores satisfying the precondition.
+    A simple way to guarantee termination is to exhibit a "variant":
+    an integer-valued expression that decreases at every loop iteration
+    while remaining nonnegative. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="alessthan">alessthan</a></span> (<span class="id">a</span>: <span class="id"><a href="CDF.IMP.html#aexp">aexp</a></span>) (<span class="id">v</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span>) : <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> (<span class="id">s</span>: <span class="id"><a href="CDF.IMP.html#store">store</a></span>) =&gt; 0 &lt;= <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id"><a href="CDF.HoareLogic.html#a">a</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> &lt; <span class="id"><a href="CDF.HoareLogic.html#v">v</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="Triple_while">Triple_while</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">variant</span> <span class="id">b</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[[ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span> <span class="id"><a href="CDF.HoareLogic.html#variant">variant</a></span> <span class="id"><a href="CDF.HoareLogic.html#v">v</a></span> ]]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#c">c</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[[ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#alessthan">alessthan</a></span> <span class="id"><a href="CDF.HoareLogic.html#variant">variant</a></span> <span class="id"><a href="CDF.HoareLogic.html#v">v</a></span> ]])<br/>
+&nbsp;&nbsp;-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[[<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>]] <span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> [[<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#afalse">afalse</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span>]].<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof200')">Proof.</div>
+<div class="proofscript" id="proof200">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">P</span> <span class="id">variant</span> <span class="id">b</span> <span class="id">c</span> <span class="id">T</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">REC</span>: <span class="kwd">forall</span> <span class="id">v</span> <span class="id">s</span>, <span class="id">P</span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> -&gt; <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id">variant</span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> = <span class="id"><a href="CDF.HoareLogic.html#v">v</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span>) <span class="id">s</span>' /\ (<span class="id">P</span> <span class="id">s</span>' /\ <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>' = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span>)).<br/>
+&nbsp;&nbsp;{ <span class="tactic">induction</span> <span class="id">v</span> <span class="kwd">using</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#well_founded_induction">well_founded_induction</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.BinInt.html#Z.lt_wf">Z.lt_wf</a></span> 0)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>) <span class="id">eqn</span>:<span class="id">B</span>.<br/>
+&nbsp;&nbsp;- <span class="tactic">destruct</span> (<span class="id">T</span> <span class="id">v</span> <span class="id">s</span>) <span class="kwd">as</span> (<span class="id">s1</span> &amp; <span class="id">EXEC1</span> &amp; (<span class="id">PS1</span> &amp; <span class="id">LT1</span>)). <span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#aand">aand</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span>, <span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">H</span> <span class="id">_</span> <span class="id">LT1</span> <span class="id">s1</span> <span class="id">PS1</span>) <span class="kwd">as</span> (<span class="id">s2</span> &amp; <span class="id">EXEC2</span> &amp; <span class="id">PS2</span>). <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s2</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_while_loop">cexec_while_loop</a></span> <span class="kwd">with</span> <span class="id">s1</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;- <span class="id">exists</span> <span class="id">s</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_while_done">cexec_while_done</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">s</span> <span class="id">PRE</span>. <span class="tactic">apply</span> <span class="id">REC</span> <span class="kwd">with</span> (<span class="id">v</span> := <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id">variant</span> <span class="id">s</span>); <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<h3> Exercise (3 stars) </h3>
+<br/>
+<div class="doc">The "variant" trick and the order on nonnegative integers are sometimes
+    insufficient to show termination of a <span class="bracket"><span class="id">WHILE</span></span> loop.
+    Here is a more powerful rule that uses two variant expressions
+    and a lexicographic ordering between pairs of nonnegative integers.
+    Show that this rule is sound. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="Triple_while_lexico">Triple_while_lexico</a></span>: <span class="kwd">forall</span> <span class="id">P</span> <span class="id">variant1</span> <span class="id">variant2</span> <span class="id">b</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">v1</span> <span class="id">v2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[[ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span> <span class="id"><a href="CDF.HoareLogic.html#variant1">variant1</a></span> <span class="id"><a href="CDF.HoareLogic.html#v1">v1</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span> <span class="id"><a href="CDF.HoareLogic.html#variant2">variant2</a></span> <span class="id"><a href="CDF.HoareLogic.html#v2">v2</a></span> ]]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#c">c</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[[ <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> //\\ (<span class="id"><a href="CDF.HoareLogic.html#alessthan">alessthan</a></span> <span class="id"><a href="CDF.HoareLogic.html#variant1">variant1</a></span> <span class="id"><a href="CDF.HoareLogic.html#v1">v1</a></span> \\// <span class="id"><a href="CDF.HoareLogic.html#aequal">aequal</a></span> <span class="id"><a href="CDF.HoareLogic.html#variant1">variant1</a></span> <span class="id"><a href="CDF.HoareLogic.html#v1">v1</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#alessthan">alessthan</a></span> <span class="id"><a href="CDF.HoareLogic.html#variant2">variant2</a></span> <span class="id"><a href="CDF.HoareLogic.html#v2">v2</a></span>) ]])<br/>
+&nbsp;&nbsp;-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[[<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>]] <span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> [[<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> //\\ <span class="id"><a href="CDF.HoareLogic.html#afalse">afalse</a></span> <span class="id"><a href="CDF.HoareLogic.html#b">b</a></span>]].<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof201')">Proof.</div>
+<div class="proofscript" id="proof201">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">P</span> <span class="id">variant1</span> <span class="id">variant2</span> <span class="id">b</span> <span class="id">c</span> <span class="id">T</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">REC</span>: <span class="kwd">forall</span> <span class="id">v1</span> <span class="id">v2</span> <span class="id">s</span>, <span class="id">P</span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> -&gt; <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id">variant1</span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> = <span class="id"><a href="CDF.HoareLogic.html#v1">v1</a></span> -&gt; <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id">variant2</span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> = <span class="id"><a href="CDF.HoareLogic.html#v2">v2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span>) <span class="id">s</span>' /\ (<span class="id">P</span> <span class="id">s</span>' /\ <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>' = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span>)).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;FILL&nbsp;IN&nbsp;HERE&nbsp;*)</span><br/>
+Admitted.</div>
+<br/>
+<h2> 4.8.  Verification condition generation </h2>
+<br/>
+<div class="doc">With the exception of the rule for <span class="bracket"><span class="id">WHILE</span></span> loops, the rules of
+    Hoare logic can be read as an algorithm that, given a command <span class="bracket"><span class="id">c</span></span>
+    and a postcondition <span class="bracket"><span class="id">Q</span></span>, computes the weakest precondition <span class="bracket"><span class="id">P</span></span>.
+    For example, if <span class="bracket"><span class="id">c</span></span> comprises two assignments in sequence
+<pre>
+    c = ASSIGN x1 a1 ;; ASSIGN x2 a2</pre>
+    the precondition <span class="bracket"><span class="id">P</span></span> is determined as
+<pre>
+    P = aupdate x1 a1 (aupdate x2 a2 Q)</pre>
+    Such a computation is much simpler than general proof search,
+    which can apply the weakening rule <span class="bracket"><span class="id">triple_consequence</span></span> at any point. </div>
+<br/>
+<div class="doc">Of course, the problem is with <span class="bracket"><span class="id">WHILE</span></span> loops: the loop invariant
+    cannot be determined automatically by a computation. </div>
+<br/>
+<div class="doc">In the following, we develop a hybrid approach where loops are
+    manually annotated with their loop invariants, but all other preconditions
+    are automatically computed from the postconditions. </div>
+<br/>
+<span class="kwd">Module</span> <span class="id"><a name="VCGEN">VCGEN</a></span>.<br/>
+<br/>
+<div class="doc">This is the language of commands where <span class="bracket"><span class="id">WHILE</span></span> loops are annotated by
+    an invariant <span class="bracket"><span class="id">Inv</span></span>. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="VCGEN.com">com</a></span>: <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;| <span class="id"><a name="VCGEN.SKIP">SKIP</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="VCGEN.ASSIGN">ASSIGN</a></span> (<span class="id">x</span>: <span class="id"><a href="CDF.IMP.html#ident">ident</a></span>) (<span class="id">a</span>: <span class="id"><a href="CDF.IMP.html#aexp">aexp</a></span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a name="VCGEN.SEQ">SEQ</a></span> (<span class="id">c1</span>: <span class="id"><a href="CDF.HoareLogic.html#com">com</a></span>) (<span class="id">c2</span>: <span class="id"><a href="CDF.HoareLogic.html#com">com</a></span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a name="VCGEN.IFTHENELSE">IFTHENELSE</a></span> (<span class="id">b</span>: <span class="id"><a href="CDF.IMP.html#bexp">bexp</a></span>) (<span class="id">c1</span>: <span class="id"><a href="CDF.HoareLogic.html#com">com</a></span>) (<span class="id">c2</span>: <span class="id"><a href="CDF.HoareLogic.html#com">com</a></span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a name="VCGEN.WHILE">WHILE</a></span> (<span class="id">Inv</span>: <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span>) (<span class="id">b</span>: <span class="id"><a href="CDF.IMP.html#bexp">bexp</a></span>) (<span class="id">c1</span>: <span class="id"><a href="CDF.HoareLogic.html#com">com</a></span>).  <span class="docright">(* new!  *)</span><br/>
+<br/>
+<div class="doc">The function <span class="bracket"><span class="id">pre</span> <span class="id">c</span> <span class="id">Q</span></span> computes a precondition for command <span class="bracket"><span class="id">c</span></span>
+    and postcondition <span class="bracket"><span class="id">Q</span></span>, by "backward execution" of command <span class="bracket"><span class="id">c</span></span> and
+    application of the rules of Hoare logic.  The only exception is
+    <span class="bracket"><span class="id">WHILE</span></span> loops, where we take as precondition the loop invariant
+    provided. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="VCGEN.pre">pre</a></span> (<span class="id">c</span>: <span class="id"><a href="CDF.HoareLogic.html#VCGEN.com">com</a></span>) (<span class="id">Q</span>: <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span>) : <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.HoareLogic.html#VCGEN.SKIP">SKIP</a></span> =&gt; <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.HoareLogic.html#VCGEN.ASSIGN">ASSIGN</a></span> <span class="id">x</span> <span class="id">a</span> =&gt; <span class="id"><a href="CDF.HoareLogic.html#aupdate">aupdate</a></span> <span class="id">x</span> <span class="id">a</span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.HoareLogic.html#VCGEN.SEQ">SEQ</a></span> <span class="id">c1</span> <span class="id">c2</span> =&gt; <span class="id"><a href="CDF.HoareLogic.html#pre">pre</a></span> <span class="id">c1</span> (<span class="id"><a href="CDF.HoareLogic.html#pre">pre</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.HoareLogic.html#VCGEN.IFTHENELSE">IFTHENELSE</a></span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span> =&gt; <span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span> <span class="id">b</span> //\\ <span class="id"><a href="CDF.HoareLogic.html#pre">pre</a></span> <span class="id">c1</span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> \\// <span class="id"><a href="CDF.HoareLogic.html#afalse">afalse</a></span> <span class="id">b</span> //\\ <span class="id"><a href="CDF.HoareLogic.html#pre">pre</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.HoareLogic.html#VCGEN.WHILE">WHILE</a></span> <span class="id">Inv</span> <span class="id">b</span> <span class="id">c</span> =&gt; <span class="id">Inv</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">The Hoare triple <span class="bracket"> {{ <span class="id">pre</span> <span class="id">c</span> <span class="id">Q</span> }} <span class="id">c</span> {{ <span class="id">Q</span> }} </span> is not always valid:
+    we must also ensure that the invariants provided for the loops are
+    actually invariant.  For a loop <span class="bracket"><span class="id">WHILE</span> <span class="id">Inv</span> <span class="id">b</span> <span class="id">c</span></span> having postcondition <span class="bracket"><span class="id">Q</span></span>,
+    it must be the case that
+<ul>
+<li>
+   <span class="bracket"><span class="id">afalse</span> <span class="id">b</span> //\\ <span class="id">Inv</span> --&gt;&gt; <span class="id">Q</span></span> : 
+    when the loop stops, the invariant implies the postcondition;
+</li>
+<li>
+   <span class="bracket"><span class="id">atrue</span> <span class="id">b</span> //\\ <span class="id">Inv</span> --&gt;&gt; <span class="id">pre</span> <span class="id">c</span> <span class="id">Inv</span></span> :
+    when the loop iterates, the invariant implies the precondition of
+    the loop body.
+</li>
+</ul>
+    The following function <span class="bracket"><span class="id">vcg</span></span> (Verification Condition Generator) 
+    collects all these "verification conditions" for all the loops <span class="bracket"><span class="id">WHILE</span></span>
+    contained in command <span class="bracket"><span class="id">c</span></span>. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="VCGEN.vcg">vcg</a></span> (<span class="id">c</span>: <span class="id"><a href="CDF.HoareLogic.html#VCGEN.com">com</a></span>) (<span class="id">Q</span>: <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.HoareLogic.html#VCGEN.SKIP">SKIP</a></span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.HoareLogic.html#VCGEN.ASSIGN">ASSIGN</a></span> <span class="id">x</span> <span class="id">a</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.HoareLogic.html#VCGEN.SEQ">SEQ</a></span> <span class="id">c1</span> <span class="id">c2</span> =&gt; <span class="id"><a href="CDF.HoareLogic.html#vcg">vcg</a></span> <span class="id">c1</span> (<span class="id"><a href="CDF.HoareLogic.html#VCGEN.pre">pre</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>) /\ <span class="id"><a href="CDF.HoareLogic.html#vcg">vcg</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.HoareLogic.html#VCGEN.IFTHENELSE">IFTHENELSE</a></span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span> =&gt; <span class="id"><a href="CDF.HoareLogic.html#vcg">vcg</a></span> <span class="id">c1</span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> /\ <span class="id"><a href="CDF.HoareLogic.html#vcg">vcg</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.HoareLogic.html#VCGEN.WHILE">WHILE</a></span> <span class="id">Inv</span> <span class="id">b</span> <span class="id">c</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#vcg">vcg</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id">Inv</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;/\ (<span class="id"><a href="CDF.HoareLogic.html#afalse">afalse</a></span> <span class="id">b</span> //\\ <span class="id">Inv</span> --&gt;&gt; <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;/\ (<span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span> <span class="id">b</span> //\\ <span class="id">Inv</span> --&gt;&gt; <span class="id"><a href="CDF.HoareLogic.html#VCGEN.pre">pre</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id">Inv</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">The triple <span class="bracket"> {{<span class="id">P</span>}} <span class="id">c</span> {{<span class="id">Q</span>}} </span> is valid as soon as
+<ul>
+<li>
+   <span class="bracket"><span class="id">P</span></span> implies the precondition <span class="bracket"><span class="id">pre</span> <span class="id">c</span> <span class="id">Q</span></span>
+</li>
+<li>
+   the conditions <span class="bracket"><span class="id">vcg</span> <span class="id">c</span> <span class="id">Q</span></span> are true.
+</li>
+</ul>
+</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="VCGEN.vcgen">vcgen</a></span> (<span class="id">P</span>: <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span>) (<span class="id">c</span>: <span class="id"><a href="CDF.HoareLogic.html#VCGEN.com">com</a></span>) (<span class="id">Q</span>: <span class="id"><a href="CDF.HoareLogic.html#assertion">assertion</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;(<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> --&gt;&gt; <span class="id"><a href="CDF.HoareLogic.html#VCGEN.pre">pre</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>) /\ <span class="id"><a href="CDF.HoareLogic.html#VCGEN.vcg">vcg</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>.<br/>
+<br/>
+<div class="doc">To prove this verification algorithm correct, we define
+    the plain IMP command <span class="bracket"><span class="id">erase</span> <span class="id">c</span></span> obtained from the annotated command <span class="bracket"><span class="id">c</span></span>
+    by erasing the loop invariants from the <span class="bracket"><span class="id">WHILE</span></span> nodes. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="VCGEN.erase">erase</a></span> (<span class="id">c</span>: <span class="id"><a href="CDF.HoareLogic.html#VCGEN.com">com</a></span>) : <span class="id"><a href="CDF.IMP.html#com">IMP.com</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.HoareLogic.html#VCGEN.SKIP">SKIP</a></span> =&gt; <span class="id"><a href="CDF.IMP.html#SKIP">IMP.SKIP</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.HoareLogic.html#VCGEN.ASSIGN">ASSIGN</a></span> <span class="id">x</span> <span class="id">a</span> =&gt; <span class="id"><a href="CDF.IMP.html#ASSIGN">IMP.ASSIGN</a></span> <span class="id">x</span> <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.HoareLogic.html#VCGEN.SEQ">SEQ</a></span> <span class="id">c1</span> <span class="id">c2</span> =&gt; <span class="id"><a href="CDF.IMP.html#SEQ">IMP.SEQ</a></span> (<span class="id"><a href="CDF.HoareLogic.html#erase">erase</a></span> <span class="id">c1</span>) (<span class="id"><a href="CDF.HoareLogic.html#erase">erase</a></span> <span class="id">c2</span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.HoareLogic.html#VCGEN.IFTHENELSE">IFTHENELSE</a></span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span> =&gt; <span class="id"><a href="CDF.IMP.html#IFTHENELSE">IMP.IFTHENELSE</a></span> <span class="id">b</span> (<span class="id"><a href="CDF.HoareLogic.html#erase">erase</a></span> <span class="id">c1</span>) (<span class="id"><a href="CDF.HoareLogic.html#erase">erase</a></span> <span class="id">c2</span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.HoareLogic.html#VCGEN.WHILE">WHILE</a></span> <span class="id">Inv</span> <span class="id">b</span> <span class="id">c</span> =&gt; <span class="id"><a href="CDF.IMP.html#WHILE">IMP.WHILE</a></span> <span class="id">b</span> (<span class="id"><a href="CDF.HoareLogic.html#erase">erase</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">We can then show that <span class="bracket"><span class="id">pre</span> <span class="id">c</span> <span class="id">Q</span></span> is a valid precondition for <span class="bracket"><span class="id">c</span></span> and <span class="bracket"><span class="id">Q</span></span>,
+    provided that the conditions <span class="bracket"><span class="id">vcg</span> <span class="id">c</span> <span class="id">Q</span></span> are true. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="VCGEN.vcg_sound">vcg_sound</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">Q</span>, <span class="id"><a href="CDF.HoareLogic.html#VCGEN.vcg">vcg</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> -&gt; {{<span class="id"><a href="CDF.HoareLogic.html#VCGEN.pre">pre</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#VCGEN.erase">erase</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>}}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof202')">Proof.</div>
+<div class="proofscript" id="proof202">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">c</span>; <span class="id">cbn</span>; <span class="tactic">intros</span>.<br/>
+- <span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#triple_skip">triple_skip</a></span>.<br/>
+- <span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#triple_assign">triple_assign</a></span>.<br/>
+- <span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> (<span class="id">V1</span> &amp; <span class="id">V2</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#triple_seq">triple_seq</a></span> <span class="kwd">with</span> (<span class="id"><a href="CDF.HoareLogic.html#VCGEN.pre">pre</a></span> <span class="id">c2</span> <span class="id">Q</span>); <span class="tactic">auto</span>.<br/>
+- <span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> (<span class="id">V1</span> &amp; <span class="id">V2</span>). <br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#triple_ifthenelse">triple_ifthenelse</a></span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#triple_consequence">triple_consequence</a></span>. <span class="tactic">eapply</span> <span class="id">IHc1</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aand">aand</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aor">aor</a></span>, <span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span>, <span class="id"><a href="CDF.HoareLogic.html#afalse">afalse</a></span>. <span class="tactic">intuition</span> <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#triple_consequence">triple_consequence</a></span>. <span class="tactic">eapply</span> <span class="id">IHc2</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aand">aand</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aor">aor</a></span>, <span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span>, <span class="id"><a href="CDF.HoareLogic.html#afalse">afalse</a></span>. <span class="tactic">intuition</span> <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> (<span class="id">V1</span> &amp; <span class="id">V2</span> &amp; <span class="id">V3</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#triple_consequence">triple_consequence</a></span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#triple_while">triple_while</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#triple_consequence">triple_consequence</a></span>. <span class="tactic">apply</span> <span class="id">IHc</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eauto</span>. <span class="tactic">red</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">red</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">The correctness of algorithm <span class="bracket"><span class="id">vcgen</span></span> follows. </div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id"><a name="VCGEN.vcgen_correct">vcgen_correct</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">P</span> <span class="id">c</span> <span class="id">Q</span>, <span class="id"><a href="CDF.HoareLogic.html#VCGEN.vcgen">vcgen</a></span> <span class="id"><a href="CDF.HoareLogic.html#P">P</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> <span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span> -&gt; {{<span class="id"><a href="CDF.HoareLogic.html#P">P</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#VCGEN.erase">erase</a></span> <span class="id"><a href="CDF.HoareLogic.html#c">c</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#Q">Q</a></span>}}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof203')">Proof.</div>
+<div class="proofscript" id="proof203">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#VCGEN.vcgen">vcgen</a></span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> (<span class="id">V1</span> &amp; <span class="id">V2</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#triple_consequence">triple_consequence</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="CDF.HoareLogic.html#VCGEN.vcg_sound">vcg_sound</a></span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>. <span class="tactic">red</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<h3> Application: Euclidean division </h3>
+<br/>
+<span class="kwd">Infix</span> ";;" := <span class="id"><a href="CDF.HoareLogic.html#VCGEN.SEQ">SEQ</a></span> (<span class="tactic">at</span> <span class="id">level</span> 80, <span class="id">right</span> <span class="id">associativity</span>).<br/>
+<br/>
+<div class="doc">Here are the precondition, the loop invariant, and the postcondition
+    for the program that does Euclidean division by iterated subtraction. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="VCGEN.Pre">Pre</a></span> (<span class="id">s</span>: <span class="id"><a href="CDF.IMP.html#store">store</a></span>) :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">a</span>" &gt;= 0 /\ <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">b</span>" &gt; 0.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="VCGEN.Inv">Inv</a></span> (<span class="id">s</span>: <span class="id"><a href="CDF.IMP.html#store">store</a></span>) :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">r</span>" &gt;= 0 /\ <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">b</span>" &gt; 0 /\ <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">a</span>" = <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">b</span>" * <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">q</span>" + <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">r</span>".<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="VCGEN.Post">Post</a></span> (<span class="id">s</span>: <span class="id"><a href="CDF.IMP.html#store">store</a></span>) :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">q</span>" = <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">a</span>" / <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">b</span>" /\ <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">r</span>" = <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">a</span>" <span class="id">mod</span> <span class="id"><a href="CDF.HoareLogic.html#s">s</a></span> "<span class="id">b</span>".<br/>
+<br/>
+<div class="doc">Here is the IMP program with the loop annotated by <span class="bracket"><span class="id">Inv</span></span>. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="VCGEN.Euclidean_division">Euclidean_division</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#VCGEN.ASSIGN">ASSIGN</a></span> "<span class="id">r</span>" (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">a</span>") ;;<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#VCGEN.ASSIGN">ASSIGN</a></span> "<span class="id">q</span>" (<span class="id"><a href="CDF.IMP.html#CONST">CONST</a></span> 0) ;;<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#VCGEN.WHILE">WHILE</a></span> <span class="id"><a href="CDF.HoareLogic.html#VCGEN.Inv">Inv</a></span> (<span class="id"><a href="CDF.IMP.html#LESSEQUAL">LESSEQUAL</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">b</span>") (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">r</span>"))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="CDF.HoareLogic.html#VCGEN.ASSIGN">ASSIGN</a></span> "<span class="id">r</span>" (<span class="id"><a href="CDF.IMP.html#MINUS">MINUS</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">r</span>") (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">b</span>")) ;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.HoareLogic.html#VCGEN.ASSIGN">ASSIGN</a></span> "<span class="id">q</span>" (<span class="id"><a href="CDF.IMP.html#PLUS">PLUS</a></span> (<span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> "<span class="id">q</span>") (<span class="id"><a href="CDF.IMP.html#CONST">CONST</a></span> 1))).<br/>
+<br/>
+<div class="doc">And here is its correctness proof.  It does not use explicitly any
+    rules of Hoare logic.  Instead, we apply the <span class="bracket"><span class="id">vcgen_correct</span></span>
+    theorem, then ask Coq to compute and simplify the verification
+    condition.  In the end, all what remains is a formula in standard
+    logic (not Hoare logic) that is easily proved using standard Coq
+    tactics. </div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id"><a name="VCGEN.Euclidean_division_correct">Euclidean_division_correct</a></span>:<br/>
+&nbsp;&nbsp;{{<span class="id"><a href="CDF.HoareLogic.html#VCGEN.Pre">Pre</a></span>}} <span class="id"><a href="CDF.HoareLogic.html#VCGEN.erase">erase</a></span> <span class="id"><a href="CDF.HoareLogic.html#VCGEN.Euclidean_division">Euclidean_division</a></span> {{<span class="id"><a href="CDF.HoareLogic.html#VCGEN.Post">Post</a></span>}}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof204')">Proof.</div>
+<div class="proofscript" id="proof204">
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.HoareLogic.html#VCGEN.vcgen_correct">vcgen_correct</a></span>. <span class="tactic">red</span>; <span class="id">cbn</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.HoareLogic.html#aimp">aimp</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aupdate">aupdate</a></span>, <span class="id"><a href="CDF.HoareLogic.html#aand">aand</a></span>, <span class="id"><a href="CDF.HoareLogic.html#afalse">afalse</a></span>, <span class="id"><a href="CDF.HoareLogic.html#atrue">atrue</a></span>, <span class="id"><a href="CDF.HoareLogic.html#VCGEN.Pre">Pre</a></span>, <span class="id"><a href="CDF.HoareLogic.html#VCGEN.Post">Post</a></span>, <span class="id"><a href="CDF.HoareLogic.html#VCGEN.Inv">Inv</a></span>; <span class="id">cbn</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intuition</span> <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;The&nbsp;precondition&nbsp;implies&nbsp;the&nbsp;loop&nbsp;invariant.&nbsp;*)</span><br/>
+&nbsp;&nbsp;- <span class="id">lia</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;The&nbsp;invariant&nbsp;and&nbsp;the&nbsp;loop&nbsp;exit&nbsp;imply&nbsp;the&nbsp;postcondition.&nbsp;*)</span><br/>
+&nbsp;&nbsp;- <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.BinInt.html#Z.leb_gt">Z.leb_gt</a></span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.Zdiv.html#Zdiv_unique">Zdiv_unique</a></span> <span class="kwd">with</span> (<span class="id">s</span> "<span class="id">r</span>"). <span class="id">lia</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;- <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.BinInt.html#Z.leb_gt">Z.leb_gt</a></span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.Zdiv.html#Zmod_unique">Zmod_unique</a></span> <span class="kwd">with</span> (<span class="id">s</span> "<span class="id">q</span>"). <span class="id">lia</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;The&nbsp;loop&nbsp;invariant&nbsp;is&nbsp;preserved&nbsp;at&nbsp;each&nbsp;iteration.&nbsp;*)</span><br/>
+&nbsp;&nbsp;- <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.BinInt.html#Z.leb_le">Z.leb_le</a></span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">lia</span>.<br/>
+&nbsp;&nbsp;- <span class="id">lia</span>. <br/>
+Qed.</div>
+<br/>
+<h3> Exercise (1 star) </h3>
+<div class="doc">Redo the verification after removing the hypothesis <span class="bracket"><span class="id">s</span> "<span class="id">b</span>" &gt; 0</span> from
+    the precondition and the invariant.  How is it possible that
+    the verification "goes through" even when the divisor <span class="bracket"><span class="id">b</span></span> is zero? </div>
+<br/>
+<h3> Exercise (3 stars) </h3>
+<div class="doc">Specify and verify the following program.  It leaves in <span class="bracket"><span class="id">r</span></span> the
+    integer square root of <span class="bracket"><span class="id">a</span></span>.
+<pre>
+    r := 0; s := 1;
+    while s &lt;= a do (r := r + 1; s := s + r + r + 1)</pre>
+</div>
+<br/>
+<span class="kwd">End</span> <span class="id"><a href="CDF.HoareLogic.html#VCGEN">VCGEN</a></span>.<br/>
+
+</div>
+<div class="footer"><hr/>Generated by <a href="https://github.com/xavierleroy/coq2html/">coq2html</a></div>
+</body>
+</html>

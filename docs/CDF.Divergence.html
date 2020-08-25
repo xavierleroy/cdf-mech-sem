@@ -1,0 +1,606 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Divergence</title>
+<meta name="description" content="Documentation of Coq module Divergence" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Divergence</h1>
+<div class="coq">
+<span class="id">From</span> <span class="id">Coq</span> <span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Arith.Arith.html">Arith</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.ZArith.html">ZArith</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.micromega.Psatz.html">Psatz</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html">Bool</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html">String</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html">List</a></span>.<br/>
+<span class="id">From</span> <span class="id">CDF</span> <span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="CDF.Sequences.html">Sequences</a></span> <span class="id"><a href="CDF.IMP.html">IMP</a></span> <span class="id"><a href="CDF.Compil.html">Compil</a></span>.<br/>
+<br/>
+<h1> 6.  Semantics of divergence, first part </h1>
+<br/>
+<div class="doc">Some proofs in this file are not constructive and use classical logic
+    through axioms, namely the axiom of excluded middle and an
+    axiom of description.  These axioms are imported from the Coq
+    standard library. </div>
+<br/>
+<span class="id">From</span> <span class="id">Coq</span> <span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical.html">Classical</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Description.html">Description</a></span>.<br/>
+<br/>
+<span class="kwd">Check</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical_Prop.html#classic">classic</a></span>.<br/>
+<span class="kwd">Check</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Description.html#constructive_definite_description">constructive_definite_description</a></span>.<br/>
+<br/>
+<h2> 6.1.  Bounded interpreter </h2>
+<br/>
+<div class="doc">Let's reconsider the reference interpreter <span class="bracket"><span class="id">cexec_f</span></span> from module <span class="bracket"><span class="id">IMP</span></span>,
+    rewritten in monadic style.  Recall that termination of the interpreter
+    is ensured by the "fuel" parameter that decreases at each recursive call.
+    If the fuel drops to zero, the interpreter returns <span class="bracket"><span class="id">None</span></span>,
+    meaning that the final store at the end of the command execution
+    could not be determined: either the command diverges or we need more
+    fuel to execute it to completion. </div>
+<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="bind">bind</a></span> {<span class="id">A</span> <span class="id">B</span>: <span class="kwd">Type</span>} (<span class="id">m</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="CDF.Divergence.html#A">A</a></span>) (<span class="id">f</span>: <span class="id"><a href="CDF.Divergence.html#A">A</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="CDF.Divergence.html#B">B</a></span>) : <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="CDF.Divergence.html#B">B</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Divergence.html#m">m</a></span> <span class="kwd">with</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> | <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">s</span> =&gt; <span class="id"><a href="CDF.Divergence.html#f">f</a></span> <span class="id">s</span> <span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="cinterp">cinterp</a></span> (<span class="id">fuel</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span>) (<span class="id">c</span>: <span class="id"><a href="CDF.IMP.html#com">com</a></span>) (<span class="id">s</span>: <span class="id"><a href="CDF.IMP.html#store">store</a></span>) : <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="CDF.IMP.html#store">store</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Divergence.html#fuel">fuel</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#O">O</a></span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a></span> <span class="id">n</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id">x</span> <span class="id">a</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="CDF.IMP.html#update">update</a></span> <span class="id">x</span> (<span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id">a</span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>) <span class="id"><a href="CDF.Divergence.html#s">s</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SEQ">SEQ</a></span> <span class="id">c1</span> <span class="id">c2</span> =&gt; <span class="id"><a href="CDF.Divergence.html#bind">bind</a></span> (<span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id">n</span> <span class="id">c1</span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>) (<span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id">n</span> <span class="id">c2</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id">n</span> (<span class="kwd">if</span> <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="kwd">then</span> <span class="id">c1</span> <span class="kwd">else</span> <span class="id">c2</span>) <span class="id"><a href="CDF.Divergence.html#s">s</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c1</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">then</span> <span class="id"><a href="CDF.Divergence.html#bind">bind</a></span> (<span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id">n</span> <span class="id">c1</span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>) (<span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id">n</span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c1</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">A crucial property of this bounded interpreter is that the <span class="bracket"><span class="id">cinterp</span></span>
+    function is monotonically increasing: more fuel gives a more defined
+    result according to the following <span class="bracket">&lt;&lt;=</span> order. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="lessdef">lessdef</a></span> {<span class="id">A</span>: <span class="kwd">Type</span>}: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id">A</span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id">A</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id"><a name="lessdef_none">lessdef_none</a></span>: <span class="kwd">forall</span> <span class="id">oa</span>, <span class="id"><a href="CDF.Divergence.html#lessdef">lessdef</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> <span class="id"><a href="CDF.Divergence.html#oa">oa</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="lessdef_some">lessdef_some</a></span>: <span class="kwd">forall</span> <span class="id">a</span>, <span class="id"><a href="CDF.Divergence.html#lessdef">lessdef</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="CDF.Divergence.html#a">a</a></span>) (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="CDF.Divergence.html#a">a</a></span>).<br/>
+<br/>
+<span class="kwd">Notation</span> "<span class="id">x</span> &lt;&lt;= <span class="id">y</span>" := (<span class="id"><a href="CDF.Divergence.html#lessdef">lessdef</a></span> <span class="id">x</span> <span class="id">y</span>) (<span class="tactic">at</span> <span class="id">level</span> 70, <span class="id">no</span> <span class="id">associativity</span>).<br/>
+<br/>
+<span class="kwd">Hint</span> <span class="id">Constructors</span> <span class="id"><a href="CDF.Divergence.html#lessdef">lessdef</a></span> : <span class="id">lessdef</span>.<br/>
+<br/>
+<span class="kwd">Remark</span> <span class="id"><a name="lessdef_refl">lessdef_refl</a></span>: <span class="kwd">forall</span> (<span class="id">A</span>: <span class="kwd">Type</span>) (<span class="id">x</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="CDF.Divergence.html#A">A</a></span>), <span class="id"><a href="CDF.Divergence.html#x">x</a></span> &lt;&lt;= <span class="id"><a href="CDF.Divergence.html#x">x</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof105')">Proof.</div>
+<div class="proofscript" id="proof105">
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">x</span>; <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">lessdef</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Remark</span> <span class="id"><a name="bind_mono">bind_mono</a></span>: <span class="kwd">forall</span> (<span class="id">A</span> <span class="id">B</span>: <span class="kwd">Type</span>) (<span class="id">x</span> <span class="id">x</span>': <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="CDF.Divergence.html#A">A</a></span>) (<span class="id">f</span> <span class="id">f</span>': <span class="id"><a href="CDF.Divergence.html#A">A</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="CDF.Divergence.html#B">B</a></span>),<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#x">x</a></span> &lt;&lt;= <span class="id">x</span>' -&gt; (<span class="kwd">forall</span> <span class="id">v</span>, <span class="id"><a href="CDF.Divergence.html#f">f</a></span> <span class="id"><a href="CDF.Divergence.html#v">v</a></span> &lt;&lt;= <span class="id">f</span>' <span class="id"><a href="CDF.Divergence.html#v">v</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#bind">bind</a></span> <span class="id"><a href="CDF.Divergence.html#x">x</a></span> <span class="id"><a href="CDF.Divergence.html#f">f</a></span> &lt;&lt;= <span class="id"><a href="CDF.Divergence.html#bind">bind</a></span> <span class="id">x</span>' <span class="id">f</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof106')">Proof.</div>
+<div class="proofscript" id="proof106">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>; <span class="id">cbn</span>; <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">lessdef</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="cinterp_mono">cinterp_mono</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">j</span> <span class="id">c</span> <span class="id">s</span>, <span class="id"><a href="CDF.Divergence.html#i">i</a></span> &lt;= <span class="id"><a href="CDF.Divergence.html#j">j</a></span> -&gt; <span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id"><a href="CDF.Divergence.html#i">i</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> &lt;&lt;= <span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id"><a href="CDF.Divergence.html#j">j</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof107')">Proof.</div>
+<div class="proofscript" id="proof107">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">i</span> <span class="kwd">as</span> [ | <span class="id">i</span>]; <span class="tactic">intros</span>; <span class="id">cbn</span>.<br/>
+- <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">lessdef</span>.<br/>
+- <span class="tactic">destruct</span> <span class="id">j</span> <span class="kwd">as</span> [ | <span class="id">j</span>]. <span class="id">lia</span>. <span class="id">cbn</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">c</span>; <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">lessdef</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#bind_mono">bind_mono</a></span>. <span class="tactic">apply</span> <span class="id">IHi</span>; <span class="id">lia</span>. <span class="tactic">intros</span>; <span class="tactic">apply</span> <span class="id">IHi</span>; <span class="id">lia</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">apply</span> <span class="id">IHi</span>; <span class="id">lia</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>); <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">lessdef</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#bind_mono">bind_mono</a></span>. <span class="tactic">apply</span> <span class="id">IHi</span>; <span class="id">lia</span>. <span class="tactic">intros</span>; <span class="tactic">apply</span> <span class="id">IHi</span>; <span class="id">lia</span>.<br/>
+Qed.</div>
+<br/>
+<h2> 6.2.  From the bounded interpreter to a denotational semantics </h2>
+<br/>
+<div class="doc">Any sequence  <span class="bracket"><span class="id">nat</span> -&gt; <span class="id">option</span> <span class="id">A</span></span> that is increasing for the <span class="bracket">&lt;&lt;=</span> order
+    is constant: once a certain index is reached, the values in the
+    sequence no longer change.  The value in question is called the limit of
+    the sequence. </div>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="LIMIT">LIMIT</a></span>.<br/>
+<br/>
+<span class="kwd">Context</span> {<span class="id">A</span>: <span class="kwd">Type</span>} (<span class="id">f</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="CDF.Divergence.html#A">A</a></span>).<br/>
+<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="LIMIT.f_mono">f_mono</a></span>: <span class="kwd">forall</span> <span class="id">i</span> <span class="id">j</span>, <span class="id"><a href="CDF.Divergence.html#i">i</a></span> &lt;= <span class="id"><a href="CDF.Divergence.html#j">j</a></span> -&gt; <span class="id"><a href="CDF.Divergence.html#LIMIT.f">f</a></span> <span class="id"><a href="CDF.Divergence.html#i">i</a></span> &lt;&lt;= <span class="id"><a href="CDF.Divergence.html#LIMIT.f">f</a></span> <span class="id"><a href="CDF.Divergence.html#j">j</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="limit_exists">limit_exists</a></span>:<br/>
+&nbsp;&nbsp;{ <span class="id">lim</span> : <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="CDF.Divergence.html#LIMIT.A">A</a></span> | <span class="id">exists</span> <span class="id">i</span>, <span class="kwd">forall</span> <span class="id">j</span>, <span class="id"><a href="CDF.Divergence.html#i">i</a></span> &lt;= <span class="id"><a href="CDF.Divergence.html#j">j</a></span> -&gt; <span class="id"><a href="CDF.Divergence.html#LIMIT.f">f</a></span> <span class="id"><a href="CDF.Divergence.html#j">j</a></span> = <span class="id"><a href="CDF.Divergence.html#lim">lim</a></span> }.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof108')">Proof.</div>
+<div class="proofscript" id="proof108">
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Description.html#constructive_definite_description">constructive_definite_description</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical_Prop.html#classic">classic</a></span> (<span class="kwd">forall</span> <span class="id">i</span>, <span class="id"><a href="CDF.Divergence.html#LIMIT.f">f</a></span> <span class="id"><a href="CDF.Divergence.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>)) <span class="kwd">as</span> [<span class="id">DIV</span>|<span class="id">TERM</span>].<br/>
+- <span class="id">exists</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;+ <span class="id">exists</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#O">O</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">intros</span> <span class="id">lim</span> (<span class="id">i</span> &amp; <span class="id">LIM</span>). <span class="tactic">rewrite</span> &lt;- (<span class="id">DIV</span> <span class="id">i</span>). <span class="tactic">apply</span> <span class="id">LIM</span>; <span class="id">lia</span>.<br/>
+- <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical_Pred_Type.html#not_all_ex_not">not_all_ex_not</a></span> <span class="kwd">in</span> <span class="id">TERM</span>. <span class="tactic">destruct</span> <span class="id">TERM</span> <span class="kwd">as</span> (<span class="id">i</span> &amp; <span class="id">TERM</span>).<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="CDF.Divergence.html#LIMIT.f">f</a></span> <span class="id">i</span>); <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;+ <span class="id">exists</span> <span class="id">i</span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#LIMIT.f_mono">f_mono</a></span> <span class="id">i</span> <span class="id">j</span> <span class="id">H</span>). <span class="tactic">congruence</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">intros</span> <span class="id">lim</span> (<span class="id">i2</span> &amp; <span class="id">LIM2</span>). <span class="tactic">set</span> (<span class="id">j</span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.Arith.PeanoNat.html#Nat.max">Nat.max</a></span> <span class="id">i</span> <span class="id">i2</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- (<span class="id">LIM2</span> <span class="id">j</span>) <span class="tactic">by</span> <span class="id">lia</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#LIMIT.f_mono">f_mono</a></span> <span class="id">i</span> <span class="id">j</span>). <span class="id">lia</span>. <span class="tactic">congruence</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="limit">limit</a></span> : <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="CDF.Divergence.html#LIMIT.A">A</a></span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#proj1_sig">proj1_sig</a></span> <span class="id"><a href="CDF.Divergence.html#limit_exists">limit_exists</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="limit_charact">limit_charact</a></span>: <span class="id">exists</span> <span class="id">i</span>, <span class="kwd">forall</span> <span class="id">j</span>, <span class="id"><a href="CDF.Divergence.html#i">i</a></span> &lt;= <span class="id"><a href="CDF.Divergence.html#j">j</a></span> -&gt; <span class="id"><a href="CDF.Divergence.html#LIMIT.f">f</a></span> <span class="id"><a href="CDF.Divergence.html#j">j</a></span> = <span class="id"><a href="CDF.Divergence.html#limit">limit</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof109')">Proof.</div>
+<div class="proofscript" id="proof109">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.Divergence.html#limit">limit</a></span>; <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#proj2_sig">proj2_sig</a></span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id"><a href="CDF.Divergence.html#LIMIT">LIMIT</a></span>.<br/>
+<br/>
+<div class="doc">We define the denotation of a command <span class="bracket"><span class="id">c</span></span> in initial store <span class="bracket"><span class="id">s</span></span>
+    as the limit of the interpretation of <span class="bracket"><span class="id">c</span></span> when fuel goes to infinity. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="denot">denot</a></span> (<span class="id">c</span>: <span class="id"><a href="CDF.IMP.html#com">com</a></span>) (<span class="id">s</span>: <span class="id"><a href="CDF.IMP.html#store">store</a></span>) : <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="CDF.IMP.html#store">store</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#limit">limit</a></span> (<span class="kwd">fun</span> <span class="id">n</span> =&gt; <span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id"><a href="CDF.Divergence.html#n">n</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>) (<span class="kwd">fun</span> <span class="id">i</span> <span class="id">j</span> =&gt; <span class="id"><a href="CDF.Divergence.html#cinterp_mono">cinterp_mono</a></span> <span class="id"><a href="CDF.Divergence.html#i">i</a></span> <span class="id"><a href="CDF.Divergence.html#j">j</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="denot_charact">denot_charact</a></span>: <br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">s</span>, <span class="id">exists</span> <span class="id">i</span>, <span class="kwd">forall</span> <span class="id">j</span>, <span class="id"><a href="CDF.Divergence.html#i">i</a></span> &lt;= <span class="id"><a href="CDF.Divergence.html#j">j</a></span> -&gt; <span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id"><a href="CDF.Divergence.html#j">j</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof110')">Proof.</div>
+<div class="proofscript" id="proof110">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#limit_charact">limit_charact</a></span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="denot_unique">denot_unique</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">s</span> <span class="id">i</span> <span class="id">lim</span>,<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">j</span>, <span class="id"><a href="CDF.Divergence.html#i">i</a></span> &lt;= <span class="id"><a href="CDF.Divergence.html#j">j</a></span> -&gt; <span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id"><a href="CDF.Divergence.html#j">j</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="CDF.Divergence.html#lim">lim</a></span>) -&gt; <span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="CDF.Divergence.html#lim">lim</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof111')">Proof.</div>
+<div class="proofscript" id="proof111">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#denot_charact">denot_charact</a></span> <span class="id">c</span> <span class="id">s</span>) <span class="kwd">as</span> (<span class="id">i</span>' &amp; <span class="id">LIM</span>').<br/>
+&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">j</span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.Arith.PeanoNat.html#Nat.max">Nat.max</a></span> <span class="id">i</span> <span class="id">i</span>').<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- (<span class="id">H</span> <span class="id">j</span>), &lt;- (<span class="id">LIM</span>' <span class="id">j</span>) <span class="tactic">by</span> <span class="id">lia</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="denot_some">denot_some</a></span>: <span class="kwd">forall</span> <span class="id">n</span> <span class="id">c</span> <span class="id">s</span> <span class="id">s</span>',<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id"><a href="CDF.Divergence.html#n">n</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">s</span>' -&gt; <span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">s</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof112')">Proof.</div>
+<div class="proofscript" id="proof112">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#denot_unique">denot_unique</a></span> <span class="kwd">with</span> <span class="id">n</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#cinterp_mono">cinterp_mono</a></span> <span class="id">n</span> <span class="id">j</span> <span class="id">c</span> <span class="id">s</span> <span class="id">H0</span>); <span class="tactic">congruence</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="denot_none">denot_none</a></span>: <span class="kwd">forall</span> <span class="id">c</span> <span class="id">s</span>,<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id"><a href="CDF.Divergence.html#n">n</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>) &lt;-&gt; <span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof113')">Proof.</div>
+<div class="proofscript" id="proof113">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">split</span>; <span class="tactic">intros</span>.<br/>
+- <span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#denot_unique">denot_unique</a></span> <span class="kwd">with</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#O">O</a></span>. <span class="tactic">auto</span>.<br/>
+- <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id">n</span> <span class="id">c</span> <span class="id">s</span>) <span class="kwd">as</span> [<span class="id">s</span>'|] <span class="id">eqn</span>:<span class="id">C</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#denot_some">denot_some</a></span> <span class="kwd">in</span> <span class="id">C</span>. <span class="tactic">congruence</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="denot_eq">denot_eq</a></span>: <span class="kwd">forall</span> <span class="id">c</span> <span class="id">s</span> <span class="id">n</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id"><a href="CDF.Divergence.html#n">n</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> \/ <span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id"><a href="CDF.Divergence.html#n">n</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof114')">Proof.</div>
+<div class="proofscript" id="proof114">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id">n</span> <span class="id">c</span> <span class="id">s</span>) <span class="kwd">as</span> [<span class="id">s</span>'|] <span class="id">eqn</span>:<span class="id">C</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">right</span>; <span class="tactic">symmetry</span>; <span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#denot_some">denot_some</a></span> <span class="kwd">with</span> <span class="id">n</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">This definition of <span class="bracket"><span class="id">denot</span></span> satisfies the expected equations for
+    an IMP denotational semantics. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="denot_skip">denot_skip</a></span>: <span class="kwd">forall</span> <span class="id">s</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof115')">Proof.</div>
+<div class="proofscript" id="proof115">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#denot_some">denot_some</a></span> <span class="kwd">with</span> 1. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="denot_assign">denot_assign</a></span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">a</span> <span class="id">s</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> (<span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id"><a href="CDF.Divergence.html#x">x</a></span> <span class="id"><a href="CDF.Divergence.html#a">a</a></span>) <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="CDF.IMP.html#update">update</a></span> <span class="id"><a href="CDF.Divergence.html#x">x</a></span> (<span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id"><a href="CDF.Divergence.html#a">a</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>) <span class="id"><a href="CDF.Divergence.html#s">s</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof116')">Proof.</div>
+<div class="proofscript" id="proof116">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#denot_some">denot_some</a></span> <span class="kwd">with</span> 1. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="denot_seq">denot_seq</a></span>: <span class="kwd">forall</span> <span class="id">c1</span> <span class="id">c2</span> <span class="id">s</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> (<span class="id"><a href="CDF.IMP.html#SEQ">SEQ</a></span> <span class="id"><a href="CDF.Divergence.html#c1">c1</a></span> <span class="id"><a href="CDF.Divergence.html#c2">c2</a></span>) <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="CDF.Divergence.html#bind">bind</a></span> (<span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> <span class="id"><a href="CDF.Divergence.html#c1">c1</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>) (<span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> <span class="id"><a href="CDF.Divergence.html#c2">c2</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof117')">Proof.</div>
+<div class="proofscript" id="proof117">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id"><a href="CDF.Divergence.html#bind">bind</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#denot_charact">denot_charact</a></span> <span class="id">c1</span> <span class="id">s</span>) <span class="kwd">as</span>  (<span class="id">i1</span> &amp; <span class="id">LIM1</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> <span class="id">c1</span> <span class="id">s</span>) <span class="kwd">as</span> [<span class="id">s1</span>|] <span class="id">eqn</span>:<span class="id">D1</span>.<br/>
+- <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#denot_charact">denot_charact</a></span> <span class="id">c2</span> <span class="id">s1</span>) <span class="kwd">as</span>  (<span class="id">i2</span> &amp; <span class="id">LIM2</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#denot_unique">denot_unique</a></span> <span class="kwd">with</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Arith.PeanoNat.html#Nat.max">Nat.max</a></span> <span class="id">i1</span> <span class="id">i2</span>)); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">j</span> <span class="kwd">as</span> [ | <span class="id">j</span>]. <span class="id">lia</span>. <span class="id">cbn</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.Divergence.html#bind">bind</a></span>. <span class="tactic">rewrite</span> <span class="id">LIM1</span>, <span class="id">LIM2</span> <span class="tactic">by</span> <span class="id">lia</span>. <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#denot_none">denot_none</a></span>. <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">n</span>; <span class="id">cbn</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#denot_eq">denot_eq</a></span> <span class="id">c1</span> <span class="id">s</span> <span class="id">n</span>) <span class="kwd">as</span> [<span class="id">E</span>|<span class="id">E</span>]; <span class="tactic">rewrite</span> <span class="id">E</span>, ?<span class="id">D1</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="denot_ifthenelse">denot_ifthenelse</a></span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span> <span class="id">s</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> (<span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#c1">c1</a></span> <span class="id"><a href="CDF.Divergence.html#c2">c2</a></span>) <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="kwd">if</span> <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="kwd">then</span> <span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> <span class="id"><a href="CDF.Divergence.html#c1">c1</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="kwd">else</span> <span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> <span class="id"><a href="CDF.Divergence.html#c2">c2</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof118')">Proof.</div>
+<div class="proofscript" id="proof118">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">c</span> := <span class="kwd">if</span> <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span> <span class="kwd">then</span> <span class="id">c1</span> <span class="kwd">else</span> <span class="id">c2</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#denot_charact">denot_charact</a></span> <span class="id">c</span> <span class="id">s</span>) <span class="kwd">as</span> (<span class="id">i</span> &amp; <span class="id">LIM</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#denot_unique">denot_unique</a></span> <span class="kwd">with</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a></span> <span class="id">i</span>). <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">j</span> <span class="kwd">as</span> [ | <span class="id">j</span>]. <span class="id">lia</span>.<br/>
+&nbsp;&nbsp;<span class="id">cbn</span>. <span class="tactic">rewrite</span> <span class="id">LIM</span> <span class="tactic">by</span> <span class="id">lia</span>. <span class="tactic">unfold</span> <span class="id">c</span>; <span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>); <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="denot_while">denot_while</a></span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">c</span> <span class="id">s</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span>) <span class="id"><a href="CDF.Divergence.html#s">s</a></span> =<br/>
+&nbsp;&nbsp;<span class="kwd">if</span> <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="kwd">then</span> <span class="id"><a href="CDF.Divergence.html#bind">bind</a></span> (<span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>) (<span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span>)) <span class="kwd">else</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof119')">Proof.</div>
+<div class="proofscript" id="proof119">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">rewrite</span> &lt;- <span class="id"><a href="CDF.Divergence.html#denot_seq">denot_seq</a></span>. <span class="tactic">set</span> (<span class="id">c</span>' := <span class="id">c</span> ;; <span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#denot_charact">denot_charact</a></span> <span class="id">c</span>' <span class="id">s</span>) <span class="kwd">as</span> (<span class="id">i</span> &amp; <span class="id">LIM</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#denot_unique">denot_unique</a></span> <span class="kwd">with</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a></span> <span class="id">i</span>). <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">j</span> <span class="kwd">as</span> [ | <span class="id">j</span>]. <span class="id">lia</span>.<br/>
+&nbsp;&nbsp;<span class="id">cbn</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>). <span class="tactic">apply</span> (<span class="id">LIM</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a></span> <span class="id">j</span>)). <span class="id">lia</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Moreover, the denotation of a loop is the least function
+    <span class="bracket"><span class="id">F</span>: <span class="id">store</span> -&gt; <span class="id">option</span> <span class="id">store</span></span> that satisfies the loop equation above. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="denot_while_min">denot_while_min</a></span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">c</span> <span class="id">F</span>,<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">s</span>, <span class="id"><a href="CDF.Divergence.html#F">F</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="kwd">if</span> <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="kwd">then</span> <span class="id"><a href="CDF.Divergence.html#bind">bind</a></span> (<span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>) <span class="id"><a href="CDF.Divergence.html#F">F</a></span> <span class="kwd">else</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>) -&gt;<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">s</span>, <span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span>) <span class="id"><a href="CDF.Divergence.html#s">s</a></span> &lt;&lt;= <span class="id"><a href="CDF.Divergence.html#F">F</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof120')">Proof.</div>
+<div class="proofscript" id="proof120">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">b</span> <span class="id">c</span> <span class="id">F</span> <span class="id">EQ</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">REC</span>: <span class="kwd">forall</span> <span class="id">n</span> <span class="id">s</span>, <span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id"><a href="CDF.Divergence.html#n">n</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span>) <span class="id"><a href="CDF.Divergence.html#s">s</a></span> &lt;&lt;= <span class="id">F</span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span>).<br/>
+&nbsp;&nbsp;{ <span class="tactic">induction</span> <span class="id">n</span> <span class="kwd">as</span> [ | <span class="id">n</span>]; <span class="tactic">intros</span>; <span class="id">cbn</span>.<br/>
+&nbsp;&nbsp;- <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">lessdef</span>.<br/>
+&nbsp;&nbsp;- <span class="tactic">rewrite</span> <span class="id">EQ</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>); <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">lessdef</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#bind_mono">bind_mono</a></span>; <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">lessdef</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#denot_eq">denot_eq</a></span> <span class="id">c</span> <span class="id">s</span> <span class="id">n</span>) <span class="kwd">as</span> [<span class="id">E</span>|<span class="id">E</span>]; <span class="tactic">rewrite</span> <span class="id">E</span>; <span class="tactic">auto</span> <span class="kwd">using</span> <span class="id"><a href="CDF.Divergence.html#lessdef_refl">lessdef_refl</a></span> <span class="kwd">with</span> <span class="id">lessdef</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#denot_charact">denot_charact</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span>) <span class="id">s</span>) <span class="kwd">as</span> (<span class="id">i</span> &amp; <span class="id">LIM</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- (<span class="id">LIM</span> <span class="id">i</span>) <span class="tactic">by</span> <span class="id">lia</span>. <span class="tactic">apply</span> <span class="id">REC</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Equivalence with natural semantics.  One direction of the equivalence
+    is a simple induction on a derivation of <span class="bracket"><span class="id">cexec</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>'</span>,
+    using the denotational semantics equations. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="cexec_denot">cexec_denot</a></span>: <span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id">s</span>' -&gt; <span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">s</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof121')">Proof.</div>
+<div class="proofscript" id="proof121">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span>.<br/>
+- <span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#denot_skip">denot_skip</a></span>.<br/>
+- <span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#denot_assign">denot_assign</a></span>.<br/>
+- <span class="tactic">rewrite</span> <span class="id"><a href="CDF.Divergence.html#denot_seq">denot_seq</a></span>, <span class="id">IHcexec1</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">rewrite</span> <span class="id"><a href="CDF.Divergence.html#denot_ifthenelse">denot_ifthenelse</a></span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>); <span class="tactic">auto</span>.<br/>
+- <span class="tactic">rewrite</span> <span class="id"><a href="CDF.Divergence.html#denot_while">denot_while</a></span>, <span class="id">H</span>. <span class="tactic">auto</span>.<br/>
+- <span class="tactic">rewrite</span> <span class="id"><a href="CDF.Divergence.html#denot_while">denot_while</a></span>, <span class="id">H</span>, <span class="id">IHcexec1</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">In the other direction, we first show, by induction over <span class="bracket"><span class="id">n</span></span>,
+    that <span class="bracket"><span class="id">cinterp</span> <span class="id">n</span> <span class="id">c</span> <span class="id">s</span> = <span class="id">Some</span> <span class="id">s</span>'</span> implies <span class="bracket"><span class="id">cexec</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>'</span>. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="cinterp_cexec">cinterp_cexec</a></span>: <span class="kwd">forall</span> <span class="id">n</span> <span class="id">c</span> <span class="id">s</span> <span class="id">s</span>', <span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id"><a href="CDF.Divergence.html#n">n</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">s</span>' -&gt; <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id">s</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof122')">Proof.</div>
+<div class="proofscript" id="proof122">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">n</span> <span class="kwd">as</span> [ | <span class="id">n</span>]; <span class="tactic">simpl</span>; <span class="tactic">intros</span>.<br/>
+- <span class="tactic">discriminate</span>.<br/>
+- <span class="tactic">destruct</span> <span class="id">c</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_skip">cexec_skip</a></span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_assign">cexec_assign</a></span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id">n</span> <span class="id">c1</span> <span class="id">s</span>) <span class="kwd">as</span> [<span class="id">s1</span>|] <span class="id">eqn</span>:<span class="id">C1</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_seq">cexec_seq</a></span> <span class="kwd">with</span> <span class="id">s1</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_ifthenelse">cexec_ifthenelse</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>) <span class="id">eqn</span>:<span class="id">B</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;* <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#cinterp">cinterp</a></span> <span class="id">n</span> <span class="id">c</span> <span class="id">s</span>) <span class="kwd">as</span> [<span class="id">s1</span>|] <span class="id">eqn</span>:<span class="id">C1</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_while_loop">cexec_while_loop</a></span> <span class="kwd">with</span> <span class="id">s1</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;* <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_while_done">cexec_while_done</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">The result follow from the definition of <span class="bracket"><span class="id">denot</span></span> as a limit. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="denot_cexec">denot_cexec</a></span>: <span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>', <span class="id"><a href="CDF.Divergence.html#denot">denot</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">s</span>' -&gt; <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id">s</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof123')">Proof.</div>
+<div class="proofscript" id="proof123">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#denot_charact">denot_charact</a></span> <span class="id">c</span> <span class="id">s</span>) <span class="kwd">as</span> (<span class="id">i</span> &amp; <span class="id">LIM</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#cinterp_cexec">cinterp_cexec</a></span> <span class="kwd">with</span> <span class="id">i</span>. <span class="tactic">rewrite</span> <span class="id">LIM</span> <span class="tactic">by</span> <span class="id">lia</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<h2> 6.3.  Coinductive natural semantics </h2>
+<br/>
+<div class="doc">The predicate <span class="bracket"><span class="id">cexecinf</span> <span class="id">s</span> <span class="id">c</span></span> means that command <span class="bracket"><span class="id">c</span></span> started in
+    initial store <span class="bracket"><span class="id">s</span></span> diverges.  The predicate is defined coinductively
+    in natural semantics style. </div>
+<br/>
+<span class="kwd">CoInductive</span> <span class="id"><a name="cexecinf">cexecinf</a></span>: <span class="id"><a href="CDF.IMP.html#store">store</a></span> -&gt; <span class="id"><a href="CDF.IMP.html#com">com</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id"><a name="cexecinf_seq_1">cexecinf_seq_1</a></span>: <span class="kwd">forall</span> <span class="id">c1</span> <span class="id">c2</span> <span class="id">s</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c1">c1</a></span> -&gt; <span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> (<span class="id"><a href="CDF.IMP.html#SEQ">SEQ</a></span> <span class="id"><a href="CDF.Divergence.html#c1">c1</a></span> <span class="id"><a href="CDF.Divergence.html#c2">c2</a></span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a name="cexecinf_seq_2">cexecinf_seq_2</a></span>: <span class="kwd">forall</span> <span class="id">c1</span> <span class="id">c2</span> <span class="id">s</span> <span class="id">s</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c1">c1</a></span> <span class="id">s</span>' -&gt; <span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id">s</span>' <span class="id"><a href="CDF.Divergence.html#c2">c2</a></span> -&gt; <span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> (<span class="id"><a href="CDF.IMP.html#SEQ">SEQ</a></span> <span class="id"><a href="CDF.Divergence.html#c1">c1</a></span> <span class="id"><a href="CDF.Divergence.html#c2">c2</a></span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a name="cexecinf_ifthenelse">cexecinf_ifthenelse</a></span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span> <span class="id">s</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> (<span class="kwd">if</span> <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="kwd">then</span> <span class="id"><a href="CDF.Divergence.html#c1">c1</a></span> <span class="kwd">else</span> <span class="id"><a href="CDF.Divergence.html#c2">c2</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> (<span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#c1">c1</a></span> <span class="id"><a href="CDF.Divergence.html#c2">c2</a></span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a name="cexecinf_while_1">cexecinf_while_1</a></span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">c</span> <span class="id">s</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> -&gt; <span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a name="cexecinf_while_2">cexecinf_while_2</a></span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">c</span> <span class="id">s</span> <span class="id">s</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> -&gt; <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id">s</span>' -&gt; <span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id">s</span>' (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span>).<br/>
+<br/>
+<div class="doc">It is easy to show that the loop <span class="bracket"><span class="id">WHILE</span> <span class="id">TRUE</span> <span class="id">SKIP</span></span> diverges
+    according to this semantics. </div>
+<br/>
+<span class="kwd">Remark</span> <span class="id"><a name="cexecinf_while_true_skip">cexecinf_while_true_skip</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span>, <span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.IMP.html#TRUE">TRUE</a></span> <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof124')">Proof.</div>
+<div class="proofscript" id="proof124">
+&nbsp;&nbsp;<span class="id">cofix</span> <span class="id">CIH</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Divergence.html#cexecinf_while_2">cexecinf_while_2</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_skip">cexec_skip</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">CIH</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Going further, we show that if <span class="bracket"><span class="id">cexecinf</span> <span class="id">s</span> <span class="id">c</span></span> is derivable,
+    there exists an infinite sequence of reductions from <span class="bracket"><span class="id">c</span>,<span class="id">s</span></span>. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="red_seq_steps_plus">red_seq_steps_plus</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c2</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>' <span class="id">c</span>',<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Sequences.html#plus">plus</a></span> <span class="tactic">red</span> (<span class="id"><a href="CDF.Divergence.html#c">c</a></span>, <span class="id"><a href="CDF.Divergence.html#s">s</a></span>) (<span class="id">c</span>', <span class="id">s</span>') -&gt; <span class="id"><a href="CDF.Sequences.html#plus">plus</a></span> <span class="tactic">red</span> ((<span class="id"><a href="CDF.Divergence.html#c">c</a></span>;;<span class="id"><a href="CDF.Divergence.html#c2">c2</a></span>), <span class="id"><a href="CDF.Divergence.html#s">s</a></span>) ((<span class="id">c</span>';;<span class="id"><a href="CDF.Divergence.html#c2">c2</a></span>), <span class="id">s</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof125')">Proof.</div>
+<div class="proofscript" id="proof125">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>. <span class="tactic">destruct</span> <span class="id">b</span> <span class="kwd">as</span> [<span class="id">c1</span> <span class="id">s1</span>]. <br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_seq_step">red_seq_step</a></span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_seq_steps">red_seq_steps</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="cexecinf_productive">cexecinf_productive</a></span>: <span class="kwd">forall</span> <span class="id">c</span> <span class="id">s</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> -&gt; <span class="id">exists</span> <span class="id">c</span>' <span class="id">s</span>', <span class="id"><a href="CDF.Sequences.html#plus">plus</a></span> <span class="tactic">red</span> (<span class="id"><a href="CDF.Divergence.html#c">c</a></span>, <span class="id"><a href="CDF.Divergence.html#s">s</a></span>) (<span class="id">c</span>', <span class="id">s</span>') /\ <span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id">s</span>' <span class="id">c</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof126')">Proof.</div>
+<div class="proofscript" id="proof126">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">c</span>; <span class="tactic">intros</span> <span class="id">s</span> <span class="id">EXEC</span>; <span class="tactic">inversion</span> <span class="id">EXEC</span>; <span class="tactic">subst</span>.<br/>
+- <span class="tactic">destruct</span> (<span class="id">IHc1</span> <span class="id">_</span> <span class="id">H1</span>) <span class="kwd">as</span> (<span class="id">c</span>' &amp; <span class="id">s</span>' &amp; <span class="id">R</span> &amp; <span class="id">E</span>).<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">c</span>' ;; <span class="id">c2</span>), <span class="id">s</span>'; <span class="tactic">split</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#red_seq_steps_plus">red_seq_steps_plus</a></span>; <span class="tactic">auto</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#cexecinf_seq_1">cexecinf_seq_1</a></span>; <span class="tactic">auto</span>.<br/>
+- <span class="id">exists</span> <span class="id">c2</span>, <span class="id">s</span>'; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#plus_right">plus_right</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_seq_steps">red_seq_steps</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_to_reds">cexec_to_reds</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+- <span class="tactic">do</span> 2 <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#plus_one">plus_one</a></span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+- <span class="tactic">do</span> 2 <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#plus_one">plus_one</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_while_loop">red_while_loop</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#cexecinf_seq_1">cexecinf_seq_1</a></span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">do</span> 2 <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#plus_right">plus_right</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_step">star_step</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_while_loop">red_while_loop</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_seq_steps">red_seq_steps</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_to_reds">cexec_to_reds</a></span>; <span class="tactic">eauto</span>. <br/>
+&nbsp;&nbsp;<span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="cexecinf_to_diverges">cexecinf_to_diverges</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span>, <span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> -&gt; <span class="id"><a href="CDF.IMP.html#diverges">diverges</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof127')">Proof.</div>
+<div class="proofscript" id="proof127">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">set</span> (<span class="id">X</span> := <span class="kwd">fun</span> <span class="id">cs</span> =&gt; <span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#snd">snd</a></span> <span class="id"><a href="CDF.Divergence.html#cs">cs</a></span>) (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#fst">fst</a></span> <span class="id"><a href="CDF.Divergence.html#cs">cs</a></span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">red</span>. <span class="tactic">apply</span> (<span class="id"><a href="CDF.Sequences.html#infseq_coinduction_principle">infseq_coinduction_principle</a></span> <span class="id">X</span>).<br/>
+- <span class="tactic">intros</span> (<span class="id">c1</span> &amp; <span class="id">s1</span>) <span class="id">D</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#cexecinf_productive">cexecinf_productive</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">D</span>) <span class="kwd">as</span> (<span class="id">c2</span> &amp; <span class="id">s2</span> &amp; <span class="id">P</span> &amp; <span class="id">D</span>').<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">c2</span>, <span class="id">s2</span>); <span class="tactic">auto</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">The converse implication --- from an infinite sequence of reductions,
+    build a derivation of <span class="bracket"><span class="id">cexecinf</span> <span class="id">s</span> <span class="id">c</span></span> --- is more difficult. </div>
+<br/>
+<div class="doc">Given a configuration <span class="bracket">(<span class="id">c</span>, <span class="id">s</span>)</span>, we want to know whether reductions
+    terminate in a finite number of steps on <span class="bracket">("<span class="id">SKIP</span>", <span class="id">s</span>')</span> or an
+    infinite sequence of reductions is possible.  This is the halting
+    problem in a disguise.  Therefore, the proof is non-constructive
+    by necessity, and uses the excluded middle axiom. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="red_progress">red_progress</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">s</span>, <span class="id"><a href="CDF.Divergence.html#c">c</a></span> = <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> \/ <span class="id">exists</span> <span class="id">c</span>', <span class="id">exists</span> <span class="id">s</span>', <span class="tactic">red</span> (<span class="id"><a href="CDF.Divergence.html#c">c</a></span>, <span class="id"><a href="CDF.Divergence.html#s">s</a></span>) (<span class="id">c</span>', <span class="id">s</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof128')">Proof.</div>
+<div class="proofscript" id="proof128">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">c</span>; <span class="tactic">intros</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="id">right</span>; <span class="tactic">do</span> 2 <span class="id">econstructor</span>; <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_assign">red_assign</a></span>.<br/>
+- <span class="id">right</span>. <span class="tactic">destruct</span> (<span class="id">IHc1</span> <span class="id">s</span>) <span class="kwd">as</span> [<span class="id">E</span> | (<span class="id">c1</span>' &amp; <span class="id">s</span>' &amp; <span class="id">R</span>)].<br/>
+&nbsp;&nbsp;+ <span class="tactic">subst</span> <span class="id">c1</span>. <span class="tactic">do</span> 2 <span class="id">econstructor</span>; <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_seq_done">red_seq_done</a></span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">do</span> 2 <span class="id">econstructor</span>; <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_seq_step">red_seq_step</a></span>; <span class="tactic">eauto</span>.<br/>
+- <span class="id">right</span>. <span class="tactic">do</span> 2 <span class="id">econstructor</span>; <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_ifthenelse">red_ifthenelse</a></span>.<br/>
+- <span class="id">right</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>) <span class="id">eqn</span>:<span class="id">B</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">do</span> 2 <span class="id">econstructor</span>; <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_while_loop">red_while_loop</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">do</span> 2 <span class="id">econstructor</span>; <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_while_done">red_while_done</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="terminates_or_diverges">terminates_or_diverges</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">s</span>, <span class="id"><a href="CDF.IMP.html#diverges">diverges</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> \/ <span class="id">exists</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#terminates">terminates</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id">s</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof129')">Proof.</div>
+<div class="proofscript" id="proof129">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical_Prop.html#classic">classic</a></span> (<span class="id"><a href="CDF.Sequences.html#all_seq_inf">all_seq_inf</a></span> <span class="tactic">red</span> (<span class="id">c</span>, <span class="id">s</span>))).<br/>
+- <span class="id">left</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#infseq_if_all_seq_inf">infseq_if_all_seq_inf</a></span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical_Pred_Type.html#not_all_ex_not">not_all_ex_not</a></span> <span class="kwd">in</span> <span class="id">H</span>. <span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> ((<span class="id">c</span>' &amp; <span class="id">s</span>') &amp; <span class="id">H</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical_Prop.html#imply_to_and">imply_to_and</a></span> <span class="kwd">in</span> <span class="id">H</span>. <span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> [<span class="id">STAR</span> <span class="id">H</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#red_progress">red_progress</a></span> <span class="id">c</span>' <span class="id">s</span>') <span class="kwd">as</span> [<span class="id">E</span> | (<span class="id">c</span>'' &amp; <span class="id">s</span>'' &amp; <span class="id">RED</span>)].<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">c</span>'. <span class="id">right</span>; <span class="id">exists</span> <span class="id">s</span>'; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">elim</span> <span class="id">H</span>; <span class="id">exists</span> (<span class="id">c</span>'', <span class="id">s</span>''); <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">We can, then, show inversion lemmas that analyze the structure
+    of infinite reduction sequences for <span class="bracket"><span class="id">SEQ</span></span> and <span class="bracket"><span class="id">WHILE</span></span> commands. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="diverges_steps_inv">diverges_steps_inv</a></span>: <span class="kwd">forall</span> <span class="id">c</span> <span class="id">s</span> <span class="id">c</span>' <span class="id">s</span>',<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#diverges">diverges</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> -&gt; <span class="id"><a href="CDF.Sequences.html#star">star</a></span> <span class="tactic">red</span> (<span class="id"><a href="CDF.Divergence.html#c">c</a></span>, <span class="id"><a href="CDF.Divergence.html#s">s</a></span>) (<span class="id">c</span>', <span class="id">s</span>') -&gt; <span class="id"><a href="CDF.IMP.html#diverges">diverges</a></span> <span class="id">s</span>' <span class="id">c</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof130')">Proof.</div>
+<div class="proofscript" id="proof130">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#infseq_star_inv">infseq_star_inv</a></span> <span class="kwd">with</span> (<span class="id">c</span>, <span class="id">s</span>); <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">eapply</span> <span class="id"><a href="CDF.IMP.html#red_determ">red_determ</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="terminates_not_diverges">terminates_not_diverges</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#terminates">terminates</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id">s</span>' -&gt; <span class="id"><a href="CDF.IMP.html#diverges">diverges</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof131')">Proof.</div>
+<div class="proofscript" id="proof131">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">D</span>: <span class="id"><a href="CDF.IMP.html#diverges">diverges</a></span> <span class="id">s</span>' <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span>).<br/>
+&nbsp;&nbsp;{ <span class="tactic">eapply</span> <span class="id"><a href="CDF.Divergence.html#diverges_steps_inv">diverges_steps_inv</a></span>; <span class="tactic">eauto</span>. }<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#infseq_inv">infseq_inv</a></span> <span class="kwd">in</span> <span class="id">D</span>. <span class="tactic">destruct</span> <span class="id">D</span> <span class="kwd">as</span> (<span class="id">b</span> &amp; <span class="id">R</span> &amp; <span class="id">I</span>). <span class="tactic">inversion</span> <span class="id">R</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="diverges_seq_inv">diverges_seq_inv</a></span>: <span class="kwd">forall</span> <span class="id">s</span> <span class="id">c1</span> <span class="id">c2</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#diverges">diverges</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> (<span class="id"><a href="CDF.Divergence.html#c1">c1</a></span> ;; <span class="id"><a href="CDF.Divergence.html#c2">c2</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#diverges">diverges</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c1">c1</a></span> \/ <span class="id">exists</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#terminates">terminates</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c1">c1</a></span> <span class="id">s</span>' /\ <span class="id"><a href="CDF.IMP.html#diverges">diverges</a></span> <span class="id">s</span>' <span class="id"><a href="CDF.Divergence.html#c2">c2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof132')">Proof.</div>
+<div class="proofscript" id="proof132">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#terminates_or_diverges">terminates_or_diverges</a></span> <span class="id">c1</span> <span class="id">s</span>) <span class="kwd">as</span> [<span class="id">D</span> | (<span class="id">s</span>' &amp; <span class="id">T</span>)].<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="id">right</span>; <span class="id">exists</span> <span class="id">s</span>'; <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Divergence.html#diverges_steps_inv">diverges_steps_inv</a></span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_trans">star_trans</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_seq_steps">red_seq_steps</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#star_one">star_one</a></span>; <span class="id">constructor</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="diverges_loop_inv">diverges_loop_inv</a></span>: <span class="kwd">forall</span> <span class="id">s</span> <span class="id">b</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#diverges">diverges</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> /\<br/>
+&nbsp;&nbsp;(<span class="id"><a href="CDF.IMP.html#diverges">diverges</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> \/ <span class="id">exists</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#terminates">terminates</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id">s</span>' /\ <span class="id"><a href="CDF.IMP.html#diverges">diverges</a></span> <span class="id">s</span>' (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.Divergence.html#b">b</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span>)).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof133')">Proof.</div>
+<div class="proofscript" id="proof133">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#infseq_inv">infseq_inv</a></span> <span class="kwd">in</span> <span class="id">H</span>. <span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> ((<span class="id">c1</span> &amp; <span class="id">s1</span>) &amp; <span class="id">R1</span> &amp; <span class="id">INF1</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">R1</span>; <span class="tactic">subst</span>.<br/>
+- <span class="tactic">elim</span> (<span class="id"><a href="CDF.Divergence.html#terminates_not_diverges">terminates_not_diverges</a></span> <span class="id">s1</span> <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> <span class="id">s1</span>); <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#star_refl">star_refl</a></span>.<br/>
+- <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#terminates_or_diverges">terminates_or_diverges</a></span> <span class="id">c</span> <span class="id">s1</span>) <span class="kwd">as</span> [<span class="id">D</span> | (<span class="id">s2</span> &amp; <span class="id">T</span>)].<br/>
++ <span class="tactic">auto</span>.<br/>
++ <span class="id">right</span>; <span class="id">exists</span> <span class="id">s2</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Divergence.html#diverges_steps_inv">diverges_steps_inv</a></span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_trans">star_trans</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#red_seq_steps">red_seq_steps</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#star_one">star_one</a></span>; <span class="id">constructor</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Finally we prove the expected implication, by coinduction. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="diverges_to_cexecinf">diverges_to_cexecinf</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span>, <span class="id"><a href="CDF.IMP.html#diverges">diverges</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> -&gt; <span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof134')">Proof.</div>
+<div class="proofscript" id="proof134">
+&nbsp;&nbsp;<span class="id">cofix</span> <span class="id">CIH</span>; <span class="tactic">intros</span> <span class="id">s</span> <span class="id">c</span> <span class="id">D</span>. <span class="tactic">destruct</span> <span class="id">c</span>.<br/>
+- <span class="comment">(*&nbsp;SKIP&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">eelim</span> <span class="id"><a href="CDF.Divergence.html#terminates_not_diverges">terminates_not_diverges</a></span>; <span class="tactic">eauto</span>.  <span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#star_refl">star_refl</a></span>.<br/>
+- <span class="comment">(*&nbsp;ASSIGN&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">eelim</span> <span class="id"><a href="CDF.Divergence.html#terminates_not_diverges">terminates_not_diverges</a></span>; <span class="tactic">eauto</span>.  <span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#star_one">star_one</a></span>. <span class="id">constructor</span>.<br/>
+- <span class="comment">(*&nbsp;SEQ&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#diverges_seq_inv">diverges_seq_inv</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">D</span>) <span class="kwd">as</span> [<span class="id">D1</span> | (<span class="id">s</span>' &amp; <span class="id">T1</span> &amp; <span class="id">D2</span>)].<br/>
+&nbsp;&nbsp;+ <span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#cexecinf_seq_1">cexecinf_seq_1</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#cexecinf_seq_2">cexecinf_seq_2</a></span> <span class="kwd">with</span> <span class="id">s</span>'; <span class="tactic">auto</span> <span class="kwd">using</span> <span class="id"><a href="CDF.IMP.html#reds_to_cexec">reds_to_cexec</a></span>.<br/>
+- <span class="comment">(*&nbsp;IFTHENELSE&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#infseq_inv">infseq_inv</a></span> <span class="kwd">in</span> <span class="id">D</span>. <span class="tactic">destruct</span> <span class="id">D</span> <span class="kwd">as</span> ((<span class="id">c</span>' &amp; <span class="id">s</span>') &amp; <span class="id">R</span> &amp; <span class="id">D</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">R</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#cexecinf_ifthenelse">cexecinf_ifthenelse</a></span>; <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;WHILE&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Divergence.html#diverges_loop_inv">diverges_loop_inv</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">D</span>) <span class="kwd">as</span> (<span class="id">B</span> &amp; [<span class="id">D1</span> | (<span class="id">s</span>' &amp; <span class="id">T1</span> &amp; <span class="id">D2</span>)]).<br/>
+&nbsp;&nbsp;+ <span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#cexecinf_while_1">cexecinf_while_1</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">apply</span> <span class="id"><a href="CDF.Divergence.html#cexecinf_while_2">cexecinf_while_2</a></span> <span class="kwd">with</span> <span class="id">s</span>'; <span class="tactic">auto</span> <span class="kwd">using</span> <span class="id"><a href="CDF.IMP.html#reds_to_cexec">reds_to_cexec</a></span>.<br/>
+Qed.</div>
+<br/>
+<h2> 6.4.  Application to compiler verification </h2>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Open</span> <span class="kwd">Scope</span> <span class="id">Z_scope</span>.<br/>
+<br/>
+<div class="doc">In the second lecture, we used natural semantics to show that
+    terminating IMP programs are correctly compiled. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="compile_com_correct_terminating">compile_com_correct_terminating</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>',<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> <span class="id">s</span>' -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">C</span> <span class="id">pc</span> σ,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Compil.html#code_at">code_at</a></span> <span class="id"><a href="CDF.Divergence.html#C">C</a></span> <span class="id"><a href="CDF.Divergence.html#pc">pc</a></span> (<span class="id"><a href="CDF.Compil.html#compile_com">compile_com</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Compil.html#transitions">transitions</a></span> <span class="id"><a href="CDF.Divergence.html#C">C</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="CDF.Divergence.html#pc">pc</a></span>, σ, <span class="id"><a href="CDF.Divergence.html#s">s</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="CDF.Divergence.html#pc">pc</a></span> + <span class="id"><a href="CDF.Compil.html#codelen">codelen</a></span> (<span class="id"><a href="CDF.Compil.html#compile_com">compile_com</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span>), σ, <span class="id">s</span>').<br/>
+<span class="kwd">Proof</span> <span class="id"><a href="CDF.Compil.html#compile_com_correct_terminating">Compil.compile_com_correct_terminating</a></span>.<br/>
+<br/>
+<div class="doc">That was a nice proof, but it gave no guarantees on the compilation
+    of diverging IMP programs.  That led us to set up a different, more
+    complex proof based on transition semantics and simulation diagrams. </div>
+<br/>
+<div class="doc">Now that we have a natural semantics for diverging programs,
+    we can use it to give a relatively simple proof that diverging
+    programs are compiled to machine code that runs forever. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="compile_com_productive">compile_com_productive</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">s</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">C</span> <span class="id">pc</span> σ,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Compil.html#code_at">code_at</a></span> <span class="id"><a href="CDF.Divergence.html#C">C</a></span> <span class="id"><a href="CDF.Divergence.html#pc">pc</a></span> (<span class="id"><a href="CDF.Compil.html#compile_com">compile_com</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">c</span>' <span class="id">pc</span>' <span class="id">s</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Sequences.html#plus">plus</a></span> (<span class="id"><a href="CDF.Compil.html#transition">transition</a></span> <span class="id"><a href="CDF.Divergence.html#C">C</a></span>) (<span class="id"><a href="CDF.Divergence.html#pc">pc</a></span>, σ, <span class="id"><a href="CDF.Divergence.html#s">s</a></span>) (<span class="id">pc</span>', σ, <span class="id">s</span>')<br/>
+&nbsp;&nbsp;/\ <span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id">s</span>' <span class="id">c</span>'<br/>
+&nbsp;&nbsp;/\ <span class="id"><a href="CDF.Compil.html#code_at">code_at</a></span> <span class="id"><a href="CDF.Divergence.html#C">C</a></span> <span class="id">pc</span>' (<span class="id"><a href="CDF.Compil.html#compile_com">compile_com</a></span> <span class="id">c</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof135')">Proof.</div>
+<div class="proofscript" id="proof135">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">c</span>; <span class="tactic">intros</span> <span class="id">s</span> <span class="id">EXEC</span> <span class="id">C</span> <span class="id">pc</span> σ <span class="id">CODEAT</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">EXEC</span>; <span class="tactic">subst</span>; <span class="tactic">clear</span> <span class="id">EXEC</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">CODEAT</span>.<br/>
+- <span class="comment">(*&nbsp;SEQ,&nbsp;left&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHc1</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">code</span>.<br/>
+- <span class="comment">(*&nbsp;SEQ,&nbsp;right&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">edestruct</span> <span class="id">IHc2</span> <span class="kwd">as</span> (<span class="id">c</span>' &amp; <span class="id">pc</span>' &amp; <span class="id">s</span>'' &amp; <span class="id">PLUS</span> &amp; <span class="id">EXEC</span>' &amp; <span class="id">CODEAT</span>'); <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">code</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">c</span>', <span class="id">pc</span>', <span class="id">s</span>''; <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_plus_trans">star_plus_trans</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="CDF.Divergence.html#compile_com_correct_terminating">compile_com_correct_terminating</a></span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">code</span>. <span class="tactic">exact</span> <span class="id">PLUS</span>.<br/>
+- <span class="comment">(*&nbsp;IFTHENELSE&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">code1</span> := <span class="id"><a href="CDF.Compil.html#compile_com">compile_com</a></span> <span class="id">c1</span>) <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">code2</span> := <span class="id"><a href="CDF.Compil.html#compile_com">compile_com</a></span> <span class="id">c2</span>) <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">codeb</span> := <span class="id"><a href="CDF.Compil.html#compile_bexp">compile_bexp</a></span> <span class="id">b</span> 0 (<span class="id"><a href="CDF.Compil.html#codelen">codelen</a></span> <span class="id">code1</span> + 1)) <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>) <span class="id">eqn</span>:<span class="id">B</span>.<br/>
+&nbsp;&nbsp;+ <span class="comment">(*&nbsp;The&nbsp;"then"&nbsp;branch&nbsp;is&nbsp;executed&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">edestruct</span> <span class="id">IHc1</span> <span class="kwd">as</span> (<span class="id">c</span>' &amp; <span class="id">pc</span>' &amp; <span class="id">s</span>' &amp; <span class="id">PLUS</span> &amp; <span class="id">EXEC</span>' &amp; <span class="id">CODEAT</span>'); <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">code</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">c</span>', <span class="id">pc</span>', <span class="id">s</span>'; <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_plus_trans">star_plus_trans</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="CDF.Compil.html#compile_bexp_correct">compile_bexp_correct</a></span> <span class="kwd">with</span> (<span class="id">b</span> := <span class="id">b</span>); <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">code</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">fold</span> <span class="id">codeb</span>. <span class="tactic">rewrite</span> <span class="id">B</span>. <span class="id">autorewrite</span> <span class="kwd">with</span> <span class="id">code</span>. <span class="id">eexact</span> <span class="id">PLUS</span>.<br/>
+&nbsp;&nbsp;+ <span class="comment">(*&nbsp;The&nbsp;"else"&nbsp;branch&nbsp;is&nbsp;executed&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">edestruct</span> <span class="id">IHc2</span> <span class="kwd">as</span> (<span class="id">c</span>' &amp; <span class="id">pc</span>' &amp; <span class="id">s</span>' &amp; <span class="id">PLUS</span> &amp; <span class="id">EXEC</span>' &amp; <span class="id">CODEAT</span>'); <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">code</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">c</span>', <span class="id">pc</span>', <span class="id">s</span>'; <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_plus_trans">star_plus_trans</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="CDF.Compil.html#compile_bexp_correct">compile_bexp_correct</a></span> <span class="kwd">with</span> (<span class="id">b</span> := <span class="id">b</span>); <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">code</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">fold</span> <span class="id">codeb</span>. <span class="tactic">rewrite</span> <span class="id">B</span>. <span class="id">autorewrite</span> <span class="kwd">with</span> <span class="id">code</span>. <span class="id">eexact</span> <span class="id">PLUS</span>.<br/>
+- <span class="comment">(*&nbsp;WHILE,&nbsp;first&nbsp;iteration&nbsp;diverges&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">edestruct</span> <span class="id">IHc</span> <span class="kwd">as</span> (<span class="id">c</span>' &amp; <span class="id">pc</span>' &amp; <span class="id">s</span>' &amp; <span class="id">PLUS</span> &amp; <span class="id">EXEC</span>' &amp; <span class="id">CODEAT</span>'); <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">code</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">c</span>', <span class="id">pc</span>', <span class="id">s</span>'; <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_plus_trans">star_plus_trans</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="CDF.Compil.html#compile_bexp_correct">compile_bexp_correct</a></span> <span class="kwd">with</span> (<span class="id">b</span> := <span class="id">b</span>); <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">code</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H2</span>. <span class="id">autorewrite</span> <span class="kwd">with</span> <span class="id">code</span>. <span class="id">eexact</span> <span class="id">PLUS</span>.<br/>
+- <span class="comment">(*&nbsp;WHILE,&nbsp;first&nbsp;iteration&nbsp;terminates&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span>), <span class="id">pc</span>, <span class="id">s</span>'; <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_plus_trans">star_plus_trans</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="CDF.Compil.html#compile_bexp_correct">compile_bexp_correct</a></span> <span class="kwd">with</span> (<span class="id">b</span> := <span class="id">b</span>); <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">code</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H1</span>. <span class="id">autorewrite</span> <span class="kwd">with</span> <span class="id">code</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Sequences.html#star_plus_trans">star_plus_trans</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="CDF.Divergence.html#compile_com_correct_terminating">compile_com_correct_terminating</a></span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">code</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#plus_one">plus_one</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="CDF.Compil.html#trans_branch">trans_branch</a></span>. <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">code</span>. <span class="id">lia</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Corollary</span> <span class="id"><a name="compile_com_correct_diverging">compile_com_correct_diverging</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id"><a href="CDF.Divergence.html#s">s</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">C</span> <span class="id">pc</span> σ,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Compil.html#code_at">code_at</a></span> <span class="id"><a href="CDF.Divergence.html#C">C</a></span> <span class="id"><a href="CDF.Divergence.html#pc">pc</a></span> (<span class="id"><a href="CDF.Compil.html#compile_com">compile_com</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Sequences.html#infseq">infseq</a></span> (<span class="id"><a href="CDF.Compil.html#transition">transition</a></span> <span class="id"><a href="CDF.Divergence.html#C">C</a></span>) (<span class="id"><a href="CDF.Divergence.html#pc">pc</a></span>, σ, <span class="id"><a href="CDF.Divergence.html#s">s</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof136')">Proof.</div>
+<div class="proofscript" id="proof136">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">X</span> := <span class="kwd">fun</span> (<span class="id">pcss</span>: <span class="id"><a href="CDF.Compil.html#config">config</a></span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> '(<span class="id">pc</span>, σ, <span class="id">s</span>) := <span class="id"><a href="CDF.Divergence.html#pcss">pcss</a></span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">c</span>, <span class="id"><a href="CDF.Divergence.html#cexecinf">cexecinf</a></span> <span class="id">s</span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span> /\ <span class="id"><a href="CDF.Compil.html#code_at">code_at</a></span> <span class="id">C</span> <span class="id">pc</span> (<span class="id"><a href="CDF.Compil.html#compile_com">compile_com</a></span> <span class="id"><a href="CDF.Divergence.html#c">c</a></span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Sequences.html#infseq_coinduction_principle">infseq_coinduction_principle</a></span> <span class="kwd">with</span> <span class="id">X</span>.<br/>
+- <span class="tactic">intros</span> [[<span class="id">pc1</span> σ1] <span class="id">s1</span>] (<span class="id">c1</span> &amp; <span class="id">EXEC</span> &amp; <span class="id">CODEAT</span>).<br/>
+&nbsp;&nbsp;<span class="id">edestruct</span> (<span class="id"><a href="CDF.Divergence.html#compile_com_productive">compile_com_productive</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">EXEC</span>) <span class="kwd">as</span> (<span class="id">c</span>' &amp; <span class="id">pc</span>' &amp; <span class="id">s</span>' &amp; <span class="id">PLUS</span> &amp; <span class="id">EXEC</span>' &amp; <span class="id">CODEAT</span>'); <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">pc</span>', σ1, <span class="id">s</span>'); <span class="tactic">split</span>. <span class="tactic">exact</span> <span class="id">PLUS</span>. <span class="id">exists</span> <span class="id">c</span>'; <span class="tactic">auto</span>.<br/>
+- <span class="id">exists</span> <span class="id">c</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+
+</div>
+<div class="footer"><hr/>Generated by <a href="https://github.com/xavierleroy/coq2html/">coq2html</a></div>
+</body>
+</html>

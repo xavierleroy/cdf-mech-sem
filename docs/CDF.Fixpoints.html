@@ -1,0 +1,162 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Fixpoints</title>
+<meta name="description" content="Documentation of Coq module Fixpoints" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Fixpoints</h1>
+<div class="coq">
+<div class="doc">Computing least fixed points, following the Knaster-Tarski theorem. </div>
+<br/>
+<span class="id">From</span> <span class="id">Coq</span> <span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.extraction.Extraction.html">Extraction</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.extraction.ExtrOcamlBasic.html">ExtrOcamlBasic</a></span>.<br/>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="KNASTER_TARSKI">KNASTER_TARSKI</a></span>.<br/>
+<br/>
+<div class="doc">Consider a type <span class="bracket"><span class="id">A</span></span> equipped with a decidable equality <span class="bracket"><span class="id">eq</span></span> and a
+    transitive ordering <span class="bracket"><span class="id">le</span></span>. </div>
+<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="KNASTER_TARSKI.A">A</a></span>: <span class="kwd">Type</span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="KNASTER_TARSKI.eq">eq</a></span>: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span> -&gt; <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span> -&gt; <span class="kwd">Prop</span>.<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="KNASTER_TARSKI.eq_dec">eq_dec</a></span>: <span class="kwd">forall</span> (<span class="id">x</span> <span class="id">y</span>: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span>), {<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.eq">eq</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> <span class="id"><a href="CDF.Fixpoints.html#y">y</a></span>} + {~<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.eq">eq</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> <span class="id"><a href="CDF.Fixpoints.html#y">y</a></span>}.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="KNASTER_TARSKI.le">le</a></span>: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span> -&gt; <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span> -&gt; <span class="kwd">Prop</span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="KNASTER_TARSKI.le_trans">le_trans</a></span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span> <span class="id">z</span>, <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> <span class="id"><a href="CDF.Fixpoints.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> <span class="id"><a href="CDF.Fixpoints.html#y">y</a></span> <span class="id"><a href="CDF.Fixpoints.html#z">z</a></span> -&gt; <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> <span class="id"><a href="CDF.Fixpoints.html#z">z</a></span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="KNASTER_TARSKI.eq_le">eq_le</a></span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span>, <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.eq">eq</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> <span class="id"><a href="CDF.Fixpoints.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> <span class="id"><a href="CDF.Fixpoints.html#y">y</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>.<br/>
+<br/>
+<div class="doc">This is the strict order induced by <span class="bracket"><span class="id">le</span></span>.  We assume it is well-founded:
+    all strictly ascending chains are finite. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="gt">gt</a></span> (<span class="id">x</span> <span class="id">y</span>: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span>) := <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> <span class="id"><a href="CDF.Fixpoints.html#y">y</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> /\ ~<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.eq">eq</a></span> <span class="id"><a href="CDF.Fixpoints.html#y">y</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>.<br/>
+<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="KNASTER_TARSKI.gt_wf">gt_wf</a></span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#well_founded">well_founded</a></span> <span class="id"><a href="CDF.Fixpoints.html#gt">gt</a></span>.<br/>
+<br/>
+<div class="doc">Let <span class="bracket"><span class="id">bot</span></span> be a smallest element of <span class="bracket"><span class="id">A</span></span>. </div>
+<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="KNASTER_TARSKI.bot">bot</a></span>: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="KNASTER_TARSKI.bot_smallest">bot_smallest</a></span>: <span class="kwd">forall</span> <span class="id">x</span>, <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.bot">bot</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>.<br/>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="KNASTER_TARSKI.FIXPOINT">FIXPOINT</a></span>.<br/>
+<br/>
+<div class="doc">Let <span class="bracket"><span class="id">F</span></span> be a monotonically increasing function from <span class="bracket"><span class="id">A</span></span> to <span class="bracket"><span class="id">A</span></span>. </div>
+<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="KNASTER_TARSKI.FIXPOINT.F">F</a></span>: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span> -&gt; <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="KNASTER_TARSKI.FIXPOINT.F_mon">F_mon</a></span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span>, <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> <span class="id"><a href="CDF.Fixpoints.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>) (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#y">y</a></span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="iterate_acc">iterate_acc</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">x</span>: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span>) (<span class="id">acc</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#Acc">Acc</a></span> <span class="id"><a href="CDF.Fixpoints.html#gt">gt</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>) (<span class="id">PRE</span>: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>)) (<span class="id">NEQ</span>: ~<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.eq">eq</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>)), <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#Acc">Acc</a></span> <span class="id"><a href="CDF.Fixpoints.html#gt">gt</a></span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof168')">Proof.</div>
+<div class="proofscript" id="proof168">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#Acc_inv">Acc_inv</a></span> <span class="kwd">with</span> <span class="id">x</span>; <span class="tactic">auto</span>. <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+Defined.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="iterate_le">iterate_le</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">x</span>: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span>) (<span class="id">PRE</span>: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>)), <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>) (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>)).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof169')">Proof.</div>
+<div class="proofscript" id="proof169">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F_mon">F_mon</a></span>. <span class="tactic">apply</span> <span class="id">PRE</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">We iterate <span class="bracket"><span class="id">F</span></span> starting from a pre-fixed-point <span class="bracket"><span class="id">x</span></span>, that is, an <span class="bracket"><span class="id">x</span></span>
+    such that <span class="bracket"><span class="id">le</span> <span class="id">x</span> (<span class="id">F</span> <span class="id">x</span>)</span>.  This is a structural recursion over a derivation
+    of accessibility <span class="bracket"><span class="id">Acc</span> <span class="id">gt</span> <span class="id">x</span></span> of <span class="bracket"><span class="id">x</span></span>, that is, over the proof that
+    all strictly increasing sequences starting from <span class="bracket"><span class="id">x</span></span> are finite.
+    This guarantees that the iteration always terminates! </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="iterate">iterate</a></span> (<span class="id">x</span>: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span>) (<span class="id">acc</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#Acc">Acc</a></span> <span class="id"><a href="CDF.Fixpoints.html#gt">gt</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>) (<span class="id">PRE</span>: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>)) {<span class="kwd">struct</span> <span class="id">acc</span>}: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">x</span>' := <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.eq_dec">eq_dec</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> <span class="id">x</span>' <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#left">left</a></span> <span class="id">E</span> =&gt; <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#right">right</a></span> <span class="id">NE</span> =&gt; <span class="id"><a href="CDF.Fixpoints.html#iterate">iterate</a></span> <span class="id">x</span>' (<span class="id"><a href="CDF.Fixpoints.html#iterate_acc">iterate_acc</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> <span class="id"><a href="CDF.Fixpoints.html#acc">acc</a></span> <span class="id"><a href="CDF.Fixpoints.html#PRE">PRE</a></span> <span class="id">NE</span>) (<span class="id"><a href="CDF.Fixpoints.html#iterate_le">iterate_le</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> <span class="id"><a href="CDF.Fixpoints.html#PRE">PRE</a></span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">The fixed point is obtained by iterating from <span class="bracket"><span class="id">bot</span></span>. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="fixpoint">fixpoint</a></span> : <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span> := <span class="id"><a href="CDF.Fixpoints.html#iterate">iterate</a></span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.bot">bot</a></span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.gt_wf">gt_wf</a></span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.bot">bot</a></span>) (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.bot_smallest">bot_smallest</a></span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.bot">bot</a></span>)).<br/>
+<br/>
+<div class="doc">It is solution to the fixed point equation. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fixpoint_eq">fixpoint_eq</a></span>: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.eq">eq</a></span> <span class="id"><a href="CDF.Fixpoints.html#fixpoint">fixpoint</a></span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#fixpoint">fixpoint</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof170')">Proof.</div>
+<div class="proofscript" id="proof170">
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">REC</span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">acc</span> <span class="id">PRE</span>, <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.eq">eq</a></span> (<span class="id"><a href="CDF.Fixpoints.html#iterate">iterate</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> <span class="id"><a href="CDF.Fixpoints.html#acc">acc</a></span> <span class="id"><a href="CDF.Fixpoints.html#PRE">PRE</a></span>) (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> (<span class="id"><a href="CDF.Fixpoints.html#iterate">iterate</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> <span class="id"><a href="CDF.Fixpoints.html#acc">acc</a></span> <span class="id"><a href="CDF.Fixpoints.html#PRE">PRE</a></span>))).<br/>
+&nbsp;&nbsp;{ <span class="tactic">induction</span> <span class="id">x</span> <span class="kwd">using</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#well_founded_induction">well_founded_induction</a></span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.gt_wf">gt_wf</a></span>). <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">acc</span>; <span class="id">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.eq_dec">eq_dec</a></span> <span class="id">x</span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> <span class="id">x</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">REC</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">It is the smallest post-fixed point. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fixpoint_smallest">fixpoint_smallest</a></span>: <span class="kwd">forall</span> <span class="id">z</span>, <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#z">z</a></span>) <span class="id"><a href="CDF.Fixpoints.html#z">z</a></span> -&gt; <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> <span class="id"><a href="CDF.Fixpoints.html#fixpoint">fixpoint</a></span> <span class="id"><a href="CDF.Fixpoints.html#z">z</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof171')">Proof.</div>
+<div class="proofscript" id="proof171">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">z</span> <span class="id">LEz</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">REC</span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">acc</span> <span class="id">PRE</span>, <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> <span class="id">z</span> -&gt; <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> (<span class="id"><a href="CDF.Fixpoints.html#iterate">iterate</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> <span class="id"><a href="CDF.Fixpoints.html#acc">acc</a></span> <span class="id"><a href="CDF.Fixpoints.html#PRE">PRE</a></span>) <span class="id">z</span>).<br/>
+&nbsp;&nbsp;{ <span class="tactic">induction</span> <span class="id">x</span> <span class="kwd">using</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#well_founded_induction">well_founded_induction</a></span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.gt_wf">gt_wf</a></span>). <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">acc</span>; <span class="id">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.eq_dec">eq_dec</a></span> <span class="id">x</span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> <span class="id">x</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le_trans">le_trans</a></span> <span class="kwd">with</span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F">F</a></span> <span class="id">z</span>). <span class="tactic">apply</span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT.F_mon">F_mon</a></span>; <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id">LEz</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">REC</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.bot_smallest">bot_smallest</a></span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT">FIXPOINT</a></span>.<br/>
+<br/>
+<div class="doc">If a function <span class="bracket"><span class="id">F</span></span> is pointwise below another function <span class="bracket"><span class="id">G</span></span>,
+    the fixed point of <span class="bracket"><span class="id">F</span></span> is below that of <span class="bracket"><span class="id">G</span></span>. </div>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="KNASTER_TARSKI.FIXPOINT_MON">FIXPOINT_MON</a></span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="KNASTER_TARSKI.FIXPOINT_MON.F">F</a></span>: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span> -&gt; <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="KNASTER_TARSKI.FIXPOINT_MON.F_mon">F_mon</a></span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span>, <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> <span class="id"><a href="CDF.Fixpoints.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT_MON.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>) (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT_MON.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#y">y</a></span>).<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="KNASTER_TARSKI.FIXPOINT_MON.G">G</a></span>: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span> -&gt; <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.A">A</a></span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="KNASTER_TARSKI.FIXPOINT_MON.G_mon">G_mon</a></span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span>, <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span> <span class="id"><a href="CDF.Fixpoints.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT_MON.G">G</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>) (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT_MON.G">G</a></span> <span class="id"><a href="CDF.Fixpoints.html#y">y</a></span>).<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="KNASTER_TARSKI.FIXPOINT_MON.F_le_G">F_le_G</a></span>: <span class="kwd">forall</span> <span class="id">x</span>, <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT_MON.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>) (<span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT_MON.G">G</a></span> <span class="id"><a href="CDF.Fixpoints.html#x">x</a></span>).<br/>
+<br/>
+<span class="kwd">Theorem</span> <span class="id"><a name="fixpoint_mon">fixpoint_mon</a></span>: <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le">le</a></span> (<span class="id"><a href="CDF.Fixpoints.html#fixpoint">fixpoint</a></span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT_MON.F">F</a></span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT_MON.F_mon">F_mon</a></span>) (<span class="id"><a href="CDF.Fixpoints.html#fixpoint">fixpoint</a></span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT_MON.G">G</a></span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT_MON.G_mon">G_mon</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof172')">Proof.</div>
+<div class="proofscript" id="proof172">
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Fixpoints.html#fixpoint_smallest">fixpoint_smallest</a></span>. <br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.le_trans">le_trans</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT_MON.F_le_G">F_le_G</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.eq_le">eq_le</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Fixpoints.html#fixpoint_eq">fixpoint_eq</a></span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI.FIXPOINT_MON">FIXPOINT_MON</a></span>.<br/>
+<br/>
+<span class="kwd">End</span> <span class="id"><a href="CDF.Fixpoints.html#KNASTER_TARSKI">KNASTER_TARSKI</a></span>.<br/>
+<br/>
+<div class="doc">Let's ask Coq to extract OCaml executable code from the definition of
+    <span class="bracket"><span class="id">fixpoint</span></span>, we see that the arguments <span class="bracket"><span class="id">acc</span></span> and<span class="bracket"><span class="id">PRE</span></span> disappear,
+    because their only purpose is to prove termination.
+    The extracted OCaml code is exactly the code we would have written
+    by hand! </div>
+<br/>
+<span class="kwd">Recursive</span> <span class="id">Extraction</span> <span class="id">fixpoint</span>.<br/>
+<br/>
+<div class="doc">Result:
+<pre>
+(** val iterate : ('a1 -&gt; 'a1 -&gt; bool) -&gt; ('a1 -&gt; 'a1) -&gt; 'a1 -&gt; 'a1 **)
+
+let rec iterate eq_dec f x =
+  let x' = f x in if eq_dec x x' then x else iterate eq_dec f x'
+
+(** val fixpoint : ('a1 -&gt; 'a1 -&gt; bool) -&gt; 'a1 -&gt; ('a1 -&gt; 'a1) -&gt; 'a1 **)
+
+let fixpoint eq_dec bot f =
+  iterate eq_dec f bot</pre>
+</div>
+
+</div>
+<div class="footer"><hr/>Generated by <a href="https://github.com/xavierleroy/coq2html/">coq2html</a></div>
+</body>
+</html>

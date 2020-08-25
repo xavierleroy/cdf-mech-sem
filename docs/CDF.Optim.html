@@ -1,0 +1,1086 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Optim</title>
+<meta name="description" content="Documentation of Coq module Optim" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Optim</h1>
+<div class="coq">
+<span class="id">From</span> <span class="id">Coq</span> <span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.ZArith.html">ZArith</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.micromega.Psatz.html">Psatz</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html">Bool</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html">String</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Program.Equality.html">Program.Equality</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.FSets.FSets.html">FSets</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Wellfounded.Wellfounded.html">Wellfounded</a></span>.<br/>
+<span class="id">From</span> <span class="id">CDF</span> <span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="CDF.Sequences.html">Sequences</a></span> <span class="id"><a href="CDF.IMP.html">IMP</a></span> <span class="id"><a href="CDF.Simulation.html">Simulation</a></span>.<br/>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Open</span> <span class="kwd">Scope</span> <span class="id">string_scope</span>.<br/>
+<span class="kwd">Local</span> <span class="kwd">Open</span> <span class="kwd">Scope</span> <span class="id">Z_scope</span>.<br/>
+<span class="kwd">Local</span> <span class="kwd">Open</span> <span class="kwd">Scope</span> <span class="id">list_scope</span>.<br/>
+<br/>
+<h1> 3. Optimizations and static analyses </h1>
+<br/>
+<h2> 3.1.  Liveness analysis </h2>
+<br/>
+<h3> Finite sets of identifiers </h3>
+<br/>
+<div class="doc">The static analysis considered here works with finite sets of IMP
+    variables.  The Coq standard library provides efficient
+    implementations of finite sets and proves many properties of set
+    operations.  In order to use this library, we must provide it with
+    a Coq module describing the type of set elements (IMP's
+    identifiers) and a decidable equality between elements. </div>
+<br/>
+<span class="kwd">Module</span> <span class="id"><a name="Ident_Decidable">Ident_Decidable</a></span> &lt;: <span class="id"><a href="http://coq.inria.fr/library/Coq.Structures.DecidableType.html#DecidableType">DecidableType</a></span> <span class="kwd">with</span> <span class="kwd">Definition</span> <span class="id">t</span> := <span class="id"><a href="CDF.IMP.html#ident">ident</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Ident_Decidable.t">t</a></span> := <span class="id"><a href="CDF.IMP.html#ident">ident</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Ident_Decidable.eq">eq</a></span> (<span class="id">x</span> <span class="id">y</span>: <span class="id"><a href="CDF.Optim.html#Ident_Decidable.t">t</a></span>) := <span class="id"><a href="CDF.Optim.html#x">x</a></span> = <span class="id"><a href="CDF.Optim.html#y">y</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Ident_Decidable.eq_refl">eq_refl</a></span> := @<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq_refl">eq_refl</a></span> <span class="id"><a href="CDF.Optim.html#Ident_Decidable.t">t</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Ident_Decidable.eq_sym">eq_sym</a></span> := @<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq_sym">eq_sym</a></span> <span class="id"><a href="CDF.Optim.html#Ident_Decidable.t">t</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Ident_Decidable.eq_trans">eq_trans</a></span> := @<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq_trans">eq_trans</a></span> <span class="id"><a href="CDF.Optim.html#Ident_Decidable.t">t</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Ident_Decidable.eq_dec">eq_dec</a></span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span>.<br/>
+<span class="kwd">End</span> <span class="id"><a href="CDF.Optim.html#Ident_Decidable">Ident_Decidable</a></span>.<br/>
+<br/>
+<div class="doc">We then instantiate the generic library modules for finite sets
+    over this element type. </div>
+<br/>
+<span class="kwd">Module</span> <span class="id"><a name="IdentSet">IdentSet</a></span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.FSets.FSetWeakList.html#Make">FSetWeakList.Make</a></span>(<span class="id"><a href="CDF.Optim.html#Ident_Decidable">Ident_Decidable</a></span>).<br/>
+<span class="kwd">Module</span> <span class="id"><a name="ISFact">ISFact</a></span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.FSets.FSetFacts.html#WFacts">FSetFacts.WFacts</a></span>(<span class="id"><a href="CDF.Optim.html#IdentSet">IdentSet</a></span>).<br/>
+<span class="kwd">Module</span> <span class="id"><a name="ISProp">ISProp</a></span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.FSets.FSetProperties.html#WProperties">FSetProperties.WProperties</a></span>(<span class="id"><a href="CDF.Optim.html#IdentSet">IdentSet</a></span>).<br/>
+<span class="kwd">Module</span> <span class="id"><a name="ISDecide">ISDecide</a></span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.FSets.FSetDecide.html#Decide">FSetDecide.Decide</a></span>(<span class="id"><a href="CDF.Optim.html#IdentSet">IdentSet</a></span>).<br/>
+<span class="kwd">Import</span> <span class="id">ISDecide</span>.<br/>
+<br/>
+<h3> Free variables </h3>
+<br/>
+<div class="doc">The set of all variables mentioned in an expression. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="fv_aexp">fv_aexp</a></span> (<span class="id">a</span>: <span class="id"><a href="CDF.IMP.html#aexp">aexp</a></span>) : <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#a">a</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#CONST">CONST</a></span> <span class="id">n</span> =&gt; <span class="id"><a href="CDF.Optim.html#empty">IdentSet.empty</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> <span class="id">v</span> =&gt; <span class="id"><a href="CDF.Optim.html#singleton">IdentSet.singleton</a></span> <span class="id">v</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#PLUS">PLUS</a></span> <span class="id">a1</span> <span class="id">a2</span> =&gt; <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_aexp">fv_aexp</a></span> <span class="id">a1</span>) (<span class="id"><a href="CDF.Optim.html#fv_aexp">fv_aexp</a></span> <span class="id">a2</span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#MINUS">MINUS</a></span> <span class="id">a1</span> <span class="id">a2</span> =&gt; <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_aexp">fv_aexp</a></span> <span class="id">a1</span>) (<span class="id"><a href="CDF.Optim.html#fv_aexp">fv_aexp</a></span> <span class="id">a2</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="fv_bexp">fv_bexp</a></span> (<span class="id">b</span>: <span class="id"><a href="CDF.IMP.html#bexp">bexp</a></span>) : <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#b">b</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#TRUE">TRUE</a></span> =&gt; <span class="id"><a href="CDF.Optim.html#empty">IdentSet.empty</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#FALSE">FALSE</a></span> =&gt; <span class="id"><a href="CDF.Optim.html#empty">IdentSet.empty</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#EQUAL">EQUAL</a></span> <span class="id">a1</span> <span class="id">a2</span> =&gt; <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_aexp">fv_aexp</a></span> <span class="id">a1</span>) (<span class="id"><a href="CDF.Optim.html#fv_aexp">fv_aexp</a></span> <span class="id">a2</span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#LESSEQUAL">LESSEQUAL</a></span> <span class="id">a1</span> <span class="id">a2</span> =&gt; <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_aexp">fv_aexp</a></span> <span class="id">a1</span>) (<span class="id"><a href="CDF.Optim.html#fv_aexp">fv_aexp</a></span> <span class="id">a2</span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#NOT">NOT</a></span> <span class="id">b1</span> =&gt; <span class="id"><a href="CDF.Optim.html#fv_bexp">fv_bexp</a></span> <span class="id">b1</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#AND">AND</a></span> <span class="id">b1</span> <span class="id">b2</span> =&gt; <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_bexp">fv_bexp</a></span> <span class="id">b1</span>) (<span class="id"><a href="CDF.Optim.html#fv_bexp">fv_bexp</a></span> <span class="id">b2</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">The set of all variables used by a command.
+    (We ignore the variables assigned but not used by the command.) </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="fv_com">fv_com</a></span> (<span class="id">c</span>: <span class="id"><a href="CDF.IMP.html#com">com</a></span>) : <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> =&gt; <span class="id"><a href="CDF.Optim.html#empty">IdentSet.empty</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id">x</span> <span class="id">a</span> =&gt; <span class="id"><a href="CDF.Optim.html#fv_aexp">fv_aexp</a></span> <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SEQ">SEQ</a></span> <span class="id">c1</span> <span class="id">c2</span> =&gt; <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_com">fv_com</a></span> <span class="id">c1</span>) (<span class="id"><a href="CDF.Optim.html#fv_com">fv_com</a></span> <span class="id">c2</span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span> =&gt; <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_bexp">fv_bexp</a></span> <span class="id">b</span>) (<span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_com">fv_com</a></span> <span class="id">c1</span>) (<span class="id"><a href="CDF.Optim.html#fv_com">fv_com</a></span> <span class="id">c2</span>))<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span> =&gt; <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_bexp">fv_bexp</a></span> <span class="id">b</span>) (<span class="id"><a href="CDF.Optim.html#fv_com">fv_com</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<h3> Computing post-fixed points </h3>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="FIXPOINT">FIXPOINT</a></span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="FIXPOINT.F">F</a></span>: <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span>.<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="FIXPOINT.default">default</a></span>: <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span>.<br/>
+<br/>
+<div class="doc">We set out to compute a set <span class="bracket"><span class="id">x</span></span> of variables such that
+    <span class="bracket"><span class="id">F</span> <span class="id">x</span></span> is a subset of <span class="bracket"><span class="id">x</span></span>.  This is called a post-fixed point of <span class="bracket"><span class="id">F</span></span>.
+    We use a naive algorithm based on bounded iteration:
+    we iterate <span class="bracket"><span class="id">F</span></span> at most <span class="bracket"><span class="id">n</span></span> times starting from the empty set
+    and stopping as soon as a post-fixed point is found.
+    If we are unsuccessful after <span class="bracket"><span class="id">n</span></span> iterations, we return a default result. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="iter">iter</a></span> (<span class="id">n</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span>) (<span class="id">x</span>: <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span>) : <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#n">n</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#O">O</a></span> =&gt; <span class="id"><a href="CDF.Optim.html#FIXPOINT.default">default</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a></span> <span class="id">n</span>' =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">x</span>' := <span class="id"><a href="CDF.Optim.html#FIXPOINT.F">F</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id"><a href="CDF.Optim.html#subset">IdentSet.subset</a></span> <span class="id">x</span>' <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="kwd">then</span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="kwd">else</span> <span class="id"><a href="CDF.Optim.html#iter">iter</a></span> <span class="id">n</span>' <span class="id">x</span>'<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="niter">niter</a></span> := 10%<span class="id">nat</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="postfixpoint">postfixpoint</a></span> : <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span> := <span class="id"><a href="CDF.Optim.html#iter">iter</a></span> <span class="id"><a href="CDF.Optim.html#niter">niter</a></span> <span class="id"><a href="CDF.Optim.html#empty">IdentSet.empty</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="postfixpoint_charact">postfixpoint_charact</a></span>:<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span> (<span class="id"><a href="CDF.Optim.html#FIXPOINT.F">F</a></span> <span class="id"><a href="CDF.Optim.html#postfixpoint">postfixpoint</a></span>) <span class="id"><a href="CDF.Optim.html#postfixpoint">postfixpoint</a></span> \/ <span class="id"><a href="CDF.Optim.html#postfixpoint">postfixpoint</a></span> = <span class="id"><a href="CDF.Optim.html#FIXPOINT.default">default</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof230')">Proof.</div>
+<div class="proofscript" id="proof230">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.Optim.html#postfixpoint">postfixpoint</a></span>. <span class="tactic">generalize</span> <span class="id"><a href="CDF.Optim.html#niter">niter</a></span>, <span class="id"><a href="CDF.Optim.html#empty">IdentSet.empty</a></span>. <span class="tactic">induction</span> <span class="id">n</span>; <span class="tactic">intros</span>; <span class="id">cbn</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Optim.html#subset">IdentSet.subset</a></span> (<span class="id"><a href="CDF.Optim.html#FIXPOINT.F">F</a></span> <span class="id">t</span>) <span class="id">t</span>) <span class="id">eqn</span>:<span class="id">SUBSET</span>.<br/>
++ <span class="id">left</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#subset_2">IdentSet.subset_2</a></span>; <span class="tactic">auto</span>.<br/>
++ <span class="tactic">apply</span> <span class="id">IHn</span>. <br/>
+Qed.</div>
+<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="FIXPOINT.F_stable">F_stable</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span>, <span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#FIXPOINT.default">default</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span> (<span class="id"><a href="CDF.Optim.html#FIXPOINT.F">F</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>) <span class="id"><a href="CDF.Optim.html#FIXPOINT.default">default</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="postfixpoint_upper_bound">postfixpoint_upper_bound</a></span>:<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span> <span class="id"><a href="CDF.Optim.html#postfixpoint">postfixpoint</a></span> <span class="id"><a href="CDF.Optim.html#FIXPOINT.default">default</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof231')">Proof.</div>
+<div class="proofscript" id="proof231">
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">REC</span>: <span class="kwd">forall</span> <span class="id">n</span> <span class="id">x</span>, <span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#FIXPOINT.default">default</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span> (<span class="id"><a href="CDF.Optim.html#iter">iter</a></span> <span class="id"><a href="CDF.Optim.html#n">n</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>) <span class="id"><a href="CDF.Optim.html#FIXPOINT.default">default</a></span>).<br/>
+&nbsp;&nbsp;{ <span class="tactic">induction</span> <span class="id">n</span>; <span class="tactic">intros</span>; <span class="id">cbn</span>.<br/>
+&nbsp;&nbsp;- <span class="id">fsetdec</span>.<br/>
+&nbsp;&nbsp;- <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Optim.html#subset">IdentSet.subset</a></span> (<span class="id"><a href="CDF.Optim.html#FIXPOINT.F">F</a></span> <span class="id">x</span>) <span class="id">x</span>); <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">REC</span>. <span class="id">fsetdec</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id"><a href="CDF.Optim.html#FIXPOINT">FIXPOINT</a></span>.<br/>
+<br/>
+<h3> Liveness analysis </h3>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">L</span></span> is the set of variables that are live "after" command <span class="bracket"><span class="id">c</span></span>.
+    The result of <span class="bracket"><span class="id">live</span> <span class="id">c</span> <span class="id">L</span></span> is the set of variables live "before" <span class="bracket"><span class="id">c</span></span>. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="live">live</a></span> (<span class="id">c</span>: <span class="id"><a href="CDF.IMP.html#com">com</a></span>) (<span class="id">L</span>: <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span>) : <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> =&gt; <span class="id"><a href="CDF.Optim.html#L">L</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id">x</span> <span class="id">a</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id"><a href="CDF.Optim.html#mem">IdentSet.mem</a></span> <span class="id">x</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">then</span> <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#remove">IdentSet.remove</a></span> <span class="id">x</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) (<span class="id"><a href="CDF.Optim.html#fv_aexp">fv_aexp</a></span> <span class="id">a</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SEQ">SEQ</a></span> <span class="id">c1</span> <span class="id">c2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id">c1</span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_bexp">fv_bexp</a></span> <span class="id">b</span>) (<span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id">c1</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) (<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>))<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">L</span>' := <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_bexp">fv_bexp</a></span> <span class="id">b</span>) <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">default</span> := <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_com">fv_com</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id"><a href="CDF.Optim.html#c">c</a></span>)) <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#postfixpoint">postfixpoint</a></span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> <span class="id">L</span>' (<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>)) <span class="id"><a href="CDF.Optim.html#default">default</a></span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">An upper bound for the variables live "before" is the variables
+    live "after" plus all variables used in command <span class="bracket"><span class="id">c</span></span>. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="live_upper_bound">live_upper_bound</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">L</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) (<span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_com">fv_com</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span>) <span class="id"><a href="CDF.Optim.html#L">L</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof232')">Proof.</div>
+<div class="proofscript" id="proof232">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">c</span>; <span class="tactic">intros</span>; <span class="tactic">simpl</span>.<br/>
+- <span class="id">fsetdec</span>.<br/>
+- <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Optim.html#mem">IdentSet.mem</a></span> <span class="id">x</span> <span class="id">L</span>) <span class="id">eqn</span>:<span class="id">MEM</span>; <span class="id">fsetdec</span>. <br/>
+- <span class="id">specialize</span> (<span class="id">IHc1</span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id">c2</span> <span class="id">L</span>)). <span class="id">specialize</span> (<span class="id">IHc2</span> <span class="id">L</span>). <span class="id">fsetdec</span>.<br/>
+- <span class="id">specialize</span> (<span class="id">IHc1</span> <span class="id">L</span>). <span class="id">specialize</span> (<span class="id">IHc2</span> <span class="id">L</span>). <span class="id">fsetdec</span>.<br/>
+- <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#postfixpoint_upper_bound">postfixpoint_upper_bound</a></span>. <span class="tactic">intros</span> <span class="id">x</span>. <span class="id">specialize</span> (<span class="id">IHc</span> <span class="id">x</span>). <span class="id">fsetdec</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">The variables live at the entry point of a loop satisfy the following
+    three conditions. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="live_while_charact">live_while_charact</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">c</span> <span class="id">L</span>,<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">L</span>' := <span class="id"><a href="CDF.Optim.html#live">live</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id"><a href="CDF.Optim.html#b">b</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span>) <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span> (<span class="id"><a href="CDF.Optim.html#fv_bexp">fv_bexp</a></span> <span class="id"><a href="CDF.Optim.html#b">b</a></span>) <span class="id">L</span>'<br/>
+&nbsp;&nbsp;/\ <span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="id">L</span>'<br/>
+&nbsp;&nbsp;/\ <span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="id">L</span>') <span class="id">L</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof233')">Proof.</div>
+<div class="proofscript" id="proof233">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id"><a href="CDF.Optim.html#postfixpoint_charact">postfixpoint_charact</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">fun</span> <span class="id">x</span> : <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span> =&gt; <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_bexp">fv_bexp</a></span> <span class="id">b</span>) <span class="id">L</span>) (<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id">c</span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_bexp">fv_bexp</a></span> <span class="id">b</span>) (<span class="id"><a href="CDF.Optim.html#fv_com">fv_com</a></span> <span class="id">c</span>)) <span class="id">L</span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">L</span>'. <span class="id">fold</span> <span class="id">L</span>'. <span class="tactic">intros</span> [<span class="id">A</span>|<span class="id">A</span>].<br/>
+- <span class="tactic">split</span>. <span class="id">fsetdec</span>. <span class="tactic">split</span>; <span class="id">fsetdec</span>. <br/>
+- <span class="tactic">rewrite</span> <span class="id">A</span>. <span class="tactic">split</span>. <span class="id">fsetdec</span>. <span class="tactic">split</span>. <span class="id">fsetdec</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#subset_trans">ISProp.subset_trans</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#live_upper_bound">live_upper_bound</a></span>. <span class="id">fsetdec</span>.<br/>
+Qed.</div>
+<br/>
+<h2> 3.2.  A compiler optimization: dead code elimination </h2>
+<br/>
+<h3> The program transformation </h3>
+<br/>
+<div class="doc">Dead code elimination (DCE) consists in replacing assignments 
+    <span class="bracket"><span class="id">x</span> := <span class="id">a</span></span> to dead variables <span class="bracket"><span class="id">x</span></span> by <span class="bracket"><span class="id">SKIP</span></span> instructions. The useless
+    computation of <span class="bracket"><span class="id">a</span></span> is eliminated. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="dce">dce</a></span> (<span class="id">c</span>: <span class="id"><a href="CDF.IMP.html#com">com</a></span>) (<span class="id">L</span>: <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span>): <span class="id"><a href="CDF.IMP.html#com">com</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> =&gt; <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id">x</span> <span class="id">a</span> =&gt; <span class="kwd">if</span> <span class="id"><a href="CDF.Optim.html#mem">IdentSet.mem</a></span> <span class="id">x</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="kwd">then</span> <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id">x</span> <span class="id">a</span> <span class="kwd">else</span> <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SEQ">SEQ</a></span> <span class="id">c1</span> <span class="id">c2</span> =&gt; <span class="id"><a href="CDF.IMP.html#SEQ">SEQ</a></span> (<span class="id"><a href="CDF.Optim.html#dce">dce</a></span> <span class="id">c1</span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>)) (<span class="id"><a href="CDF.Optim.html#dce">dce</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span> =&gt; <span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id">b</span> (<span class="id"><a href="CDF.Optim.html#dce">dce</a></span> <span class="id">c1</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) (<span class="id"><a href="CDF.Optim.html#dce">dce</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span> =&gt; <span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> (<span class="id"><a href="CDF.Optim.html#dce">dce</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id"><a href="CDF.Optim.html#c">c</a></span>) <span class="id"><a href="CDF.Optim.html#L">L</a></span>))<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">Examples of optimization. </div>
+<br/>
+<span class="kwd">Print</span> <span class="id"><a href="CDF.IMP.html#Euclidean_division">Euclidean_division</a></span>.<br/>
+<br/>
+<span class="kwd">Eval</span> <span class="tactic">compute</span> <span class="kwd">in</span> (<span class="id"><a href="CDF.Optim.html#dce">dce</a></span> <span class="id"><a href="CDF.IMP.html#Euclidean_division">Euclidean_division</a></span> (<span class="id"><a href="CDF.Optim.html#singleton">IdentSet.singleton</a></span> "<span class="id">r</span>")).<br/>
+<br/>
+<div class="doc">Effect of the code transformation:
+<pre>
+   r := a;                 ===&gt;   r := a;
+   q := 0;                        skip;
+   while b &lt;= r do                while b &lt;= r do
+     r := r - b;                    r := r - b;
+     q := q + 1;                    skip;
+   done                           done</pre>
+</div>
+<br/>
+<span class="kwd">Eval</span> <span class="tactic">compute</span> <span class="kwd">in</span> (<span class="id"><a href="CDF.Optim.html#dce">dce</a></span> <span class="id"><a href="CDF.IMP.html#Euclidean_division">Euclidean_division</a></span> (<span class="id"><a href="CDF.Optim.html#singleton">IdentSet.singleton</a></span> "<span class="id">q</span>")).<br/>
+<br/>
+<div class="doc">Here, the program is unchanged. </div>
+<br/>
+<h3> Semantic preservation </h3>
+<br/>
+<div class="doc">Two stores agree on a set <span class="bracket"><span class="id">L</span></span> of live variables
+    if they associate the same values to each live variable. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="agree">agree</a></span> (<span class="id">L</span>: <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span>) (<span class="id">s1</span> <span class="id">s2</span>: <span class="id"><a href="CDF.IMP.html#store">store</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span>, <span class="id"><a href="CDF.Optim.html#In">IdentSet.In</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> = <span class="id"><a href="CDF.Optim.html#s2">s2</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>.<br/>
+<br/>
+<div class="doc">This definition is monotonic with respect to the set <span class="bracket"><span class="id">L</span></span>. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="agree_mon">agree_mon</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">L</span> <span class="id">L</span>' <span class="id">s1</span> <span class="id">s2</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#agree">agree</a></span> <span class="id">L</span>' <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="id">L</span>' -&gt; <span class="id"><a href="CDF.Optim.html#agree">agree</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof234')">Proof.</div>
+<div class="proofscript" id="proof234">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span>, <span class="id"><a href="CDF.Optim.html#agree">agree</a></span>; <span class="tactic">intros</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">If two stores agree on the free variables of an expression,
+    this expression evaluates to the same value in both stores. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="aeval_agree">aeval_agree</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">a</span> <span class="id">s1</span> <span class="id">s2</span>, <span class="id"><a href="CDF.Optim.html#agree">agree</a></span> (<span class="id"><a href="CDF.Optim.html#fv_aexp">fv_aexp</a></span> <span class="id"><a href="CDF.Optim.html#a">a</a></span>) <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span> -&gt; <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id"><a href="CDF.Optim.html#a">a</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> = <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id"><a href="CDF.Optim.html#a">a</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof235')">Proof.</div>
+<div class="proofscript" id="proof235">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">a</span>; <span class="id">cbn</span>; <span class="tactic">intros</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">H</span>. <span class="id">fsetdec</span>. <br/>
+- <span class="tactic">f_equal</span>; [<span class="tactic">apply</span> <span class="id">IHa1</span> | <span class="tactic">apply</span> <span class="id">IHa2</span>]; <span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#agree_mon">agree_mon</a></span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>.<br/>
+- <span class="tactic">f_equal</span>; [<span class="tactic">apply</span> <span class="id">IHa1</span> | <span class="tactic">apply</span> <span class="id">IHa2</span>]; <span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#agree_mon">agree_mon</a></span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="beval_agree">beval_agree</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">s1</span> <span class="id">s2</span>, <span class="id"><a href="CDF.Optim.html#agree">agree</a></span> (<span class="id"><a href="CDF.Optim.html#fv_bexp">fv_bexp</a></span> <span class="id"><a href="CDF.Optim.html#b">b</a></span>) <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span> -&gt; <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id"><a href="CDF.Optim.html#b">b</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> = <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id"><a href="CDF.Optim.html#b">b</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof236')">Proof.</div>
+<div class="proofscript" id="proof236">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">b</span>; <span class="id">cbn</span>; <span class="tactic">intros</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="tactic">f_equal</span>; <span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#aeval_agree">aeval_agree</a></span>; <span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#agree_mon">agree_mon</a></span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>.<br/>
+- <span class="tactic">f_equal</span>; <span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#aeval_agree">aeval_agree</a></span>; <span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#agree_mon">agree_mon</a></span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>.<br/>
+- <span class="tactic">f_equal</span>; <span class="tactic">apply</span> <span class="id">IHb</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">f_equal</span>; [<span class="tactic">apply</span> <span class="id">IHb1</span> | <span class="tactic">apply</span> <span class="id">IHb2</span>]; <span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#agree_mon">agree_mon</a></span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">The <span class="bracket"><span class="id">agree</span></span> relation is preserved by parallel assignment to a live variable
+    (where the same value is assigned to the variable in both stores). </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="agree_update_live">agree_update_live</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">L</span> <span class="id">x</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#agree">agree</a></span> (<span class="id"><a href="CDF.Optim.html#remove">IdentSet.remove</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#agree">agree</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> (<span class="id"><a href="CDF.IMP.html#update">update</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#v">v</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span>) (<span class="id"><a href="CDF.IMP.html#update">update</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#v">v</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof237')">Proof.</div>
+<div class="proofscript" id="proof237">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.Optim.html#agree">agree</a></span>, <span class="id"><a href="CDF.IMP.html#update">update</a></span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> <span class="id">x</span> <span class="id">x0</span>).<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">H</span>. <span class="id">fsetdec</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">The <span class="bracket"><span class="id">agree</span></span> relation is preserved by unilateral assignment to a
+    dead variable. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="agree_update_dead">agree_update_dead</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">L</span> <span class="id">x</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#agree">agree</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span> -&gt; ~<span class="id"><a href="CDF.Optim.html#In">IdentSet.In</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#agree">agree</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> (<span class="id"><a href="CDF.IMP.html#update">update</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#v">v</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span>) <span class="id"><a href="CDF.Optim.html#s2">s2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof238')">Proof.</div>
+<div class="proofscript" id="proof238">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.Optim.html#agree">agree</a></span>, <span class="id"><a href="CDF.IMP.html#update">update</a></span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> <span class="id">x</span> <span class="id">x0</span>).<br/>
+- <span class="tactic">subst</span> <span class="id">x0</span>. <span class="id">contradiction</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">H</span>. <span class="id">fsetdec</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">We now prove that dead code elimination preserves the semantics of
+    terminating programs.  We use the natural semantics of IMP to show
+    the following diagram:
+<pre>
+               agree (live c L) s s1
+     c / s ----------------------------- dce C L / s1
+       |                                         |
+       |                                         |
+       |                                         |
+       v                                         v
+      s' -------------------------------------- s1'
+                    agree L s' s1'</pre>
+    The proof is by induction on the execution derivation of <span class="bracket"><span class="id">c</span></span>.
+</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id"><a name="dce_correct_terminating">dce_correct_terminating</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.Optim.html#s">s</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="id">s</span>' -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">L</span> <span class="id">s1</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#agree">agree</a></span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) <span class="id"><a href="CDF.Optim.html#s">s</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s1</span>', <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> (<span class="id"><a href="CDF.Optim.html#dce">dce</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) <span class="id">s1</span>' /\ <span class="id"><a href="CDF.Optim.html#agree">agree</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="id">s</span>' <span class="id">s1</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof239')">Proof.</div>
+<div class="proofscript" id="proof239">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span> <span class="id">L</span> <span class="id">s1</span> <span class="id">AG</span>.<br/>
+- <span class="comment">(*&nbsp;SKIP&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s1</span>; <span class="tactic">split</span>. <span class="id">constructor</span>. <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;ASSIGN&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> *. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Optim.html#mem">IdentSet.mem</a></span> <span class="id">x</span> <span class="id">L</span>) <span class="id">eqn</span>:<span class="id">is_live</span>.<br/>
+&nbsp;&nbsp;+ <span class="comment">(*&nbsp;x&nbsp;is&nbsp;live&nbsp;after&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">EVAL</span>: <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id">a</span> <span class="id">s</span> = <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id">a</span> <span class="id">s1</span>) <span class="tactic">by</span> (<span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#aeval_agree">aeval_agree</a></span>; <span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#agree_mon">agree_mon</a></span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_assign">cexec_assign</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">EVAL</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#agree_update_live">agree_update_live</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#agree_mon">agree_mon</a></span>; <span class="tactic">eauto</span>. <span class="id">fsetdec</span>.<br/>
+&nbsp;&nbsp;+ <span class="comment">(*&nbsp;x&nbsp;is&nbsp;dead&nbsp;after&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_skip">cexec_skip</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#agree_update_dead">agree_update_dead</a></span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">assert</span> (<span class="id"><a href="CDF.Optim.html#mem">IdentSet.mem</a></span> <span class="id">x</span> <span class="id">L</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span>) <span class="tactic">by</span> (<span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#mem_1">IdentSet.mem_1</a></span>; <span class="tactic">auto</span>). <span class="tactic">congruence</span>.<br/>
+- <span class="comment">(*&nbsp;SEQ&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">IHcexec1</span> <span class="id">_</span> <span class="id">_</span> <span class="id">AG</span>) <span class="kwd">as</span> (<span class="id">s1</span>' &amp; <span class="id">EXEC1</span> &amp; <span class="id">AG1</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">IHcexec2</span> <span class="id">_</span> <span class="id">_</span> <span class="id">AG1</span>) <span class="kwd">as</span> (<span class="id">s2</span>' &amp; <span class="id">EXEC2</span> &amp; <span class="id">AG2</span>).<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s2</span>'; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_seq">cexec_seq</a></span> <span class="kwd">with</span> <span class="id">s1</span>'; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;IFTHENELSE&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">EVAL</span>: <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span> = <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s1</span>) <span class="tactic">by</span> (<span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#beval_agree">beval_agree</a></span>; <span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#agree_mon">agree_mon</a></span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">IHcexec</span> <span class="id">L</span> <span class="id">s1</span>) <span class="kwd">as</span> (<span class="id">s1</span>' &amp; <span class="id">EXEC</span>' &amp; <span class="id">AG</span>').<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#agree_mon">agree_mon</a></span>; <span class="tactic">eauto</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>); <span class="id">fsetdec</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s1</span>'; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_ifthenelse">cexec_ifthenelse</a></span>. <span class="tactic">rewrite</span> &lt;- <span class="id">EVAL</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>); <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;WHILE&nbsp;done&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">change</span> (<span class="id"><a href="CDF.Optim.html#dce">dce</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span>) <span class="id">L</span>) <span class="kwd">with</span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> (<span class="id"><a href="CDF.Optim.html#dce">dce</a></span> <span class="id">c</span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span>) <span class="id">L</span>))).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Optim.html#live_while_charact">live_while_charact</a></span> <span class="id">b</span> <span class="id">c</span> <span class="id">L</span>) <span class="kwd">as</span> (<span class="id">P</span> &amp; <span class="id">Q</span> &amp; <span class="id">R</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">EVAL</span>: <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span> = <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s1</span>) <span class="tactic">by</span> (<span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#beval_agree">beval_agree</a></span>; <span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#agree_mon">agree_mon</a></span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>).<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s1</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_while_done">cexec_while_done</a></span>. <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#agree_mon">agree_mon</a></span>; <span class="tactic">eauto</span>.<br/>
+- <span class="comment">(*&nbsp;WHILE&nbsp;loop&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">change</span> (<span class="id"><a href="CDF.Optim.html#dce">dce</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span>) <span class="id">L</span>) <span class="kwd">with</span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> (<span class="id"><a href="CDF.Optim.html#dce">dce</a></span> <span class="id">c</span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span>) <span class="id">L</span>))).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Optim.html#live_while_charact">live_while_charact</a></span> <span class="id">b</span> <span class="id">c</span> <span class="id">L</span>) <span class="kwd">as</span> (<span class="id">P</span> &amp; <span class="id">Q</span> &amp; <span class="id">R</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">EVAL</span>: <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span> = <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s1</span>) <span class="tactic">by</span> (<span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#beval_agree">beval_agree</a></span>; <span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#agree_mon">agree_mon</a></span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">IHcexec1</span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span>) <span class="id">L</span>) <span class="id">s1</span>) <span class="kwd">as</span> (<span class="id">s1</span>' &amp; <span class="id">EXEC1</span> &amp; <span class="id">AG1</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#agree_mon">agree_mon</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">IHcexec2</span> <span class="id">L</span> <span class="id">s1</span>') <span class="kwd">as</span> (<span class="id">s2</span>' &amp; <span class="id">EXEC2</span> &amp; <span class="id">AG2</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s2</span>'; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_while_loop">cexec_while_loop</a></span> <span class="kwd">with</span> <span class="id">s1</span>'; <span class="tactic">auto</span>. <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<h3> Exercise (3 stars) </h3>
+<br/>
+<div class="doc">We can prove semantic preservation for all programs, whether terminating
+    or diverging, by showing a simulation diagram based on the reduction
+    semantics for IMP.  Here is a proof sketch for you to finish. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="kwd">measure</span> (<span class="id">c</span>: <span class="id"><a href="CDF.IMP.html#com">com</a></span>) : <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id">x</span> <span class="id">a</span> =&gt; 1<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SEQ">SEQ</a></span> <span class="id">c1</span> <span class="id">c2</span> =&gt; <span class="kwd">measure</span> <span class="id">c1</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; 0<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Theorem</span> <span class="id"><a name="dce_simulation">dce_simulation</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">s</span> <span class="id">c</span>' <span class="id">s</span>',<br/>
+&nbsp;&nbsp;<span class="tactic">red</span> (<span class="id"><a href="CDF.Optim.html#c">c</a></span>, <span class="id"><a href="CDF.Optim.html#s">s</a></span>) (<span class="id">c</span>', <span class="id">s</span>') -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">L</span> <span class="id">s1</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#agree">agree</a></span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) <span class="id"><a href="CDF.Optim.html#s">s</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> -&gt;<br/>
+&nbsp;&nbsp;(<span class="id">exists</span> <span class="id">s1</span>', <span class="tactic">red</span> (<span class="id"><a href="CDF.Optim.html#dce">dce</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>, <span class="id"><a href="CDF.Optim.html#s1">s1</a></span>) (<span class="id"><a href="CDF.Optim.html#dce">dce</a></span> <span class="id">c</span>' <span class="id"><a href="CDF.Optim.html#L">L</a></span>, <span class="id">s1</span>') /\ <span class="id"><a href="CDF.Optim.html#agree">agree</a></span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id">c</span>' <span class="id"><a href="CDF.Optim.html#L">L</a></span>) <span class="id">s</span>' <span class="id">s1</span>')<br/>
+&nbsp;&nbsp;\/<br/>
+&nbsp;&nbsp;((<span class="kwd">measure</span> <span class="id">c</span>' &lt; <span class="kwd">measure</span> <span class="id"><a href="CDF.Optim.html#c">c</a></span>)%<span class="id">nat</span> /\ <span class="id"><a href="CDF.Optim.html#dce">dce</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> = <span class="id"><a href="CDF.Optim.html#dce">dce</a></span> <span class="id">c</span>' <span class="id"><a href="CDF.Optim.html#L">L</a></span> /\ <span class="id"><a href="CDF.Optim.html#agree">agree</a></span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id">c</span>' <span class="id"><a href="CDF.Optim.html#L">L</a></span>) <span class="id">s</span>' <span class="id"><a href="CDF.Optim.html#s1">s1</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof240')">Proof.</div>
+<div class="proofscript" id="proof240">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">s</span>'; <span class="tactic">intros</span> <span class="id">STEP</span>. <span class="tactic">dependent</span> <span class="tactic">induction</span> <span class="id">STEP</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;FILL&nbsp;IN&nbsp;HERE&nbsp;*)</span><br/>
+Abort.</div>
+<br/>
+<br/>
+<h2> 3.3. Register allocation </h2>
+<br/>
+<div class="doc">In a compiler producing code for a hardware processor,
+    the register allocation pass consists in placing the most used
+    variables of the program in processor registers (available in
+    small number), the remaining variables being stored in memory,
+    typically in the stack. </div>
+<br/>
+<div class="doc">In the following, we study register allocation at the level of the IMP
+    language.  We view register allocation as a renaming of IMP variables
+    that aims at reducing the total number of variables used.  Indeed,
+    the renaming need not be injective: two variables that are used
+    in disjoint parts of the program can be merged. </div>
+<br/>
+<div class="doc">Computing a good renaming is an algorithmically-difficult problem,
+    equivalent to the graph coloring problem.  We assume that an
+    external heuristic provides us with a candidate renaming,
+    called <span class="bracket"><span class="id">f</span></span> below.  We then give sufficient and easily verifiable
+    conditions for <span class="bracket"><span class="id">f</span></span> to be a correct renaming that preserves the
+    semantics of the program. </div>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="RENAMING">RENAMING</a></span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="RENAMING.f">f</a></span>: <span class="id"><a href="CDF.IMP.html#ident">ident</a></span> -&gt; <span class="id"><a href="CDF.IMP.html#ident">ident</a></span>.   <span class="docright">(* the candidate renaming  *)</span><br/>
+<br/>
+<h3> Renaming variables in an expression </h3>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="rename_aexp">rename_aexp</a></span> (<span class="id">a</span>: <span class="id"><a href="CDF.IMP.html#aexp">aexp</a></span>) : <span class="id"><a href="CDF.IMP.html#aexp">aexp</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#a">a</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#CONST">CONST</a></span> <span class="id">n</span> =&gt; <span class="id"><a href="CDF.IMP.html#CONST">CONST</a></span> <span class="id">n</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> <span class="id">x</span> =&gt; <span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x</span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#PLUS">PLUS</a></span> <span class="id">a1</span> <span class="id">a2</span> =&gt; <span class="id"><a href="CDF.IMP.html#PLUS">PLUS</a></span> (<span class="id"><a href="CDF.Optim.html#rename_aexp">rename_aexp</a></span> <span class="id">a1</span>) (<span class="id"><a href="CDF.Optim.html#rename_aexp">rename_aexp</a></span> <span class="id">a2</span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#MINUS">MINUS</a></span> <span class="id">a1</span> <span class="id">a2</span> =&gt; <span class="id"><a href="CDF.IMP.html#MINUS">MINUS</a></span> (<span class="id"><a href="CDF.Optim.html#rename_aexp">rename_aexp</a></span> <span class="id">a1</span>) (<span class="id"><a href="CDF.Optim.html#rename_aexp">rename_aexp</a></span> <span class="id">a2</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="rename_bexp">rename_bexp</a></span> (<span class="id">b</span>: <span class="id"><a href="CDF.IMP.html#bexp">bexp</a></span>) : <span class="id"><a href="CDF.IMP.html#bexp">bexp</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#b">b</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#TRUE">TRUE</a></span> =&gt; <span class="id"><a href="CDF.IMP.html#TRUE">TRUE</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#FALSE">FALSE</a></span> =&gt; <span class="id"><a href="CDF.IMP.html#FALSE">FALSE</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#EQUAL">EQUAL</a></span> <span class="id">a1</span> <span class="id">a2</span> =&gt; <span class="id"><a href="CDF.IMP.html#EQUAL">EQUAL</a></span> (<span class="id"><a href="CDF.Optim.html#rename_aexp">rename_aexp</a></span> <span class="id">a1</span>) (<span class="id"><a href="CDF.Optim.html#rename_aexp">rename_aexp</a></span> <span class="id">a2</span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#LESSEQUAL">LESSEQUAL</a></span> <span class="id">a1</span> <span class="id">a2</span> =&gt; <span class="id"><a href="CDF.IMP.html#LESSEQUAL">LESSEQUAL</a></span> (<span class="id"><a href="CDF.Optim.html#rename_aexp">rename_aexp</a></span> <span class="id">a1</span>) (<span class="id"><a href="CDF.Optim.html#rename_aexp">rename_aexp</a></span> <span class="id">a2</span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#NOT">NOT</a></span> <span class="id">b1</span> =&gt; <span class="id"><a href="CDF.IMP.html#NOT">NOT</a></span> (<span class="id"><a href="CDF.Optim.html#rename_bexp">rename_bexp</a></span> <span class="id">b1</span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#AND">AND</a></span> <span class="id">b1</span> <span class="id">b2</span> =&gt; <span class="id"><a href="CDF.IMP.html#AND">AND</a></span> (<span class="id"><a href="CDF.Optim.html#rename_bexp">rename_bexp</a></span> <span class="id">b1</span>) (<span class="id"><a href="CDF.Optim.html#rename_bexp">rename_bexp</a></span> <span class="id">b2</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<h3> Recognizing expressions that are variables </h3>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="expr_is_var">expr_is_var</a></span> (<span class="id">a</span>: <span class="id"><a href="CDF.IMP.html#aexp">aexp</a></span>): <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="CDF.IMP.html#ident">ident</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#a">a</a></span> <span class="kwd">with</span> <span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> <span class="id">x</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">x</span> | <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> <span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="expr_is_var_correct">expr_is_var_correct</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">a</span> <span class="id">x</span>, <span class="id"><a href="CDF.Optim.html#expr_is_var">expr_is_var</a></span> <span class="id"><a href="CDF.Optim.html#a">a</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#a">a</a></span> = <span class="id"><a href="CDF.IMP.html#VAR">VAR</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof241')">Proof.</div>
+<div class="proofscript" id="proof241">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.Optim.html#expr_is_var">expr_is_var</a></span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">a</span>; <span class="tactic">congruence</span>.<br/>
+Qed.</div>
+<br/>
+<h3> The code transformation </h3>
+<br/>
+<div class="doc">The code transformation rename variables as prescribed by <span class="bracket"><span class="id">f</span></span>.
+    Furthermore, it eliminates dead code as previously.
+    Finally, it eliminates assignments <span class="bracket"><span class="id">x</span> := <span class="id">y</span></span> where the variables
+    <span class="bracket"><span class="id">x</span></span> and <span class="bracket"><span class="id">y</span></span> are renamed into the same variable <span class="bracket"><span class="id">z</span></span>. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="regalloc">regalloc</a></span> (<span class="id">c</span>: <span class="id"><a href="CDF.IMP.html#com">com</a></span>) (<span class="id">L</span>: <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span>) : <span class="id"><a href="CDF.IMP.html#com">com</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> =&gt; <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id">x</span> <span class="id">a</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id"><a href="CDF.Optim.html#mem">IdentSet.mem</a></span> <span class="id">x</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="kwd">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#expr_is_var">expr_is_var</a></span> <span class="id">a</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> =&gt; <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x</span>) (<span class="id"><a href="CDF.Optim.html#rename_aexp">rename_aexp</a></span> <span class="id">a</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">y</span> =&gt; <span class="kwd">if</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x</span>) (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">y</span>) <span class="kwd">then</span> <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> <span class="kwd">else</span> <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x</span>) (<span class="id"><a href="CDF.Optim.html#rename_aexp">rename_aexp</a></span> <span class="id">a</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SEQ">SEQ</a></span> <span class="id">c1</span> <span class="id">c2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#SEQ">SEQ</a></span> (<span class="id"><a href="CDF.Optim.html#regalloc">regalloc</a></span> <span class="id">c1</span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>)) (<span class="id"><a href="CDF.Optim.html#regalloc">regalloc</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> (<span class="id"><a href="CDF.Optim.html#rename_bexp">rename_bexp</a></span> <span class="id">b</span>) (<span class="id"><a href="CDF.Optim.html#regalloc">regalloc</a></span> <span class="id">c1</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) (<span class="id"><a href="CDF.Optim.html#regalloc">regalloc</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> (<span class="id"><a href="CDF.Optim.html#rename_bexp">rename_bexp</a></span> <span class="id">b</span>) (<span class="id"><a href="CDF.Optim.html#regalloc">regalloc</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id"><a href="CDF.Optim.html#c">c</a></span>) <span class="id"><a href="CDF.Optim.html#L">L</a></span>))<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<h3> Relating the stores </h3>
+<br/>
+<div class="doc">We revisit the <span class="bracket"><span class="id">agree</span></span> relation between stores that we used earlier
+    to reason about the DCE optimization.
+    Now, two stores <span class="bracket"><span class="id">s1</span></span> and <span class="bracket"><span class="id">s2</span></span> agree on the live variables <span class="bracket"><span class="id">L</span></span> if,
+    for each live variable <span class="bracket"><span class="id">x</span></span> in <span class="bracket"><span class="id">L</span></span>,
+    the values of <span class="bracket"><span class="id">x</span></span> in <span class="bracket"><span class="id">s1</span></span> and of <span class="bracket"><span class="id">f</span> <span class="id">x</span></span> in <span class="bracket"><span class="id">s2</span></span> are the same. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">agree</span>' (<span class="id">L</span>: <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span>) (<span class="id">s1</span> <span class="id">s2</span>: <span class="id"><a href="CDF.IMP.html#store">store</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span>, <span class="id"><a href="CDF.Optim.html#In">IdentSet.In</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> = <span class="id"><a href="CDF.Optim.html#s2">s2</a></span> (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>).<br/>
+<br/>
+<div class="doc">This definition is monotonic with respect to the set <span class="bracket"><span class="id">L</span></span>. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">agree</span>'<span class="id">_mon</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">L</span> <span class="id">L</span>' <span class="id">s1</span> <span class="id">s2</span>,<br/>
+&nbsp;&nbsp;<span class="id">agree</span>' <span class="id">L</span>' <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="id">L</span>' -&gt; <span class="id">agree</span>' <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof242')">Proof.</div>
+<div class="proofscript" id="proof242">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span>, <span class="id">agree</span>'; <span class="tactic">intros</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">If two stores agree on the free variables of an expression,
+    this expression in store 1 and its renaming in store 2
+    evaluate to the same value. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">aeval_agree</span>':<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">a</span> <span class="id">s1</span> <span class="id">s2</span>, <span class="id">agree</span>' (<span class="id"><a href="CDF.Optim.html#fv_aexp">fv_aexp</a></span> <span class="id"><a href="CDF.Optim.html#a">a</a></span>) <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span> -&gt; <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id"><a href="CDF.Optim.html#a">a</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> = <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> (<span class="id"><a href="CDF.Optim.html#rename_aexp">rename_aexp</a></span> <span class="id"><a href="CDF.Optim.html#a">a</a></span>) <span class="id"><a href="CDF.Optim.html#s2">s2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof243')">Proof.</div>
+<div class="proofscript" id="proof243">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">a</span>; <span class="id">cbn</span>; <span class="tactic">intros</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">H</span>. <span class="id">fsetdec</span>. <br/>
+- <span class="tactic">f_equal</span>; [<span class="tactic">apply</span> <span class="id">IHa1</span> | <span class="tactic">apply</span> <span class="id">IHa2</span>]; <span class="tactic">eapply</span> <span class="id">agree</span>'<span class="id">_mon</span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>.<br/>
+- <span class="tactic">f_equal</span>; [<span class="tactic">apply</span> <span class="id">IHa1</span> | <span class="tactic">apply</span> <span class="id">IHa2</span>]; <span class="tactic">eapply</span> <span class="id">agree</span>'<span class="id">_mon</span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">beval_agree</span>':<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">s1</span> <span class="id">s2</span>, <span class="id">agree</span>' (<span class="id"><a href="CDF.Optim.html#fv_bexp">fv_bexp</a></span> <span class="id"><a href="CDF.Optim.html#b">b</a></span>) <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span> -&gt; <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id"><a href="CDF.Optim.html#b">b</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> = <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> (<span class="id"><a href="CDF.Optim.html#rename_bexp">rename_bexp</a></span> <span class="id"><a href="CDF.Optim.html#b">b</a></span>) <span class="id"><a href="CDF.Optim.html#s2">s2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof244')">Proof.</div>
+<div class="proofscript" id="proof244">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">b</span>; <span class="id">cbn</span>; <span class="tactic">intros</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="tactic">f_equal</span>; <span class="tactic">eapply</span> <span class="id">aeval_agree</span>'; <span class="tactic">eapply</span> <span class="id">agree</span>'<span class="id">_mon</span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>.<br/>
+- <span class="tactic">f_equal</span>; <span class="tactic">eapply</span> <span class="id">aeval_agree</span>'; <span class="tactic">eapply</span> <span class="id">agree</span>'<span class="id">_mon</span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>.<br/>
+- <span class="tactic">f_equal</span>; <span class="tactic">apply</span> <span class="id">IHb</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">f_equal</span>; [<span class="tactic">apply</span> <span class="id">IHb1</span> | <span class="tactic">apply</span> <span class="id">IHb2</span>]; <span class="tactic">eapply</span> <span class="id">agree</span>'<span class="id">_mon</span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">The <span class="bracket"><span class="id">agree</span>'</span> relation is preserved by unilateral assignment to a
+    dead variable. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">agree</span>'<span class="id">_update_dead</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">L</span> <span class="id">x</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;<span class="id">agree</span>' <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span> -&gt; ~<span class="id"><a href="CDF.Optim.html#In">IdentSet.In</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">agree</span>' <span class="id"><a href="CDF.Optim.html#L">L</a></span> (<span class="id"><a href="CDF.IMP.html#update">update</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#v">v</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span>) <span class="id"><a href="CDF.Optim.html#s2">s2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof245')">Proof.</div>
+<div class="proofscript" id="proof245">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">agree</span>', <span class="id"><a href="CDF.IMP.html#update">update</a></span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> <span class="id">x</span> <span class="id">x0</span>).<br/>
+- <span class="tactic">subst</span> <span class="id">x0</span>. <span class="id">contradiction</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">H</span>. <span class="id">fsetdec</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">The <span class="bracket"><span class="id">agree</span>'</span> relation is preserved by parallel assignment of the same
+    value to a live variable <span class="bracket"><span class="id">x</span></span> and to its renaming <span class="bracket"><span class="id">f</span> <span class="id">x</span></span>,
+    provided that no other live variable <span class="bracket"><span class="id">z</span></span> is renamed into <span class="bracket"><span class="id">f</span> <span class="id">x</span></span>.
+    This is a non-interference property that the candidate renaming <span class="bracket"><span class="id">f</span></span>
+    must satisfy. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">agree</span>'<span class="id">_update_live</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">L</span> <span class="id">x</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;<span class="id">agree</span>' (<span class="id"><a href="CDF.Optim.html#remove">IdentSet.remove</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span> -&gt;<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">z</span>, <span class="id"><a href="CDF.Optim.html#In">IdentSet.In</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#z">z</a></span> &lt;&gt; <span class="id"><a href="CDF.Optim.html#x">x</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span> &lt;&gt; <span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">agree</span>' <span class="id"><a href="CDF.Optim.html#L">L</a></span> (<span class="id"><a href="CDF.IMP.html#update">update</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#v">v</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span>) (<span class="id"><a href="CDF.IMP.html#update">update</a></span> (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>) <span class="id"><a href="CDF.Optim.html#v">v</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof246')">Proof.</div>
+<div class="proofscript" id="proof246">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">agree</span>', <span class="id"><a href="CDF.IMP.html#update">update</a></span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> <span class="id">x</span> <span class="id">x0</span>); <span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x</span>) (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x0</span>)).<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="tactic">congruence</span>.<br/>
+- <span class="id">exfalso</span>. <span class="tactic">apply</span> (<span class="id">H0</span> <span class="id">x0</span>); <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">H</span>. <span class="id">fsetdec</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">A special case of lemma <span class="bracket"><span class="id">agree</span>'<span class="id">_update_live</span></span>, when the value assigned
+    to <span class="bracket"><span class="id">x</span></span> and <span class="bracket"><span class="id">f</span> <span class="id">x</span></span> is the value of another variable <span class="bracket"><span class="id">y</span></span>.
+    In this case, as observed by Chaitin, the non-interference condition
+    can be weakened. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">agree</span>'<span class="id">_update_move</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">L</span> <span class="id">x</span> <span class="id">y</span>,<br/>
+&nbsp;&nbsp;<span class="id">agree</span>' (<span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#remove">IdentSet.remove</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) (<span class="id"><a href="CDF.Optim.html#singleton">IdentSet.singleton</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span>)) <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span> -&gt;<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">z</span>, <span class="id"><a href="CDF.Optim.html#In">IdentSet.In</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#z">z</a></span> &lt;&gt; <span class="id"><a href="CDF.Optim.html#x">x</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#z">z</a></span> &lt;&gt; <span class="id"><a href="CDF.Optim.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span> &lt;&gt; <span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">agree</span>' <span class="id"><a href="CDF.Optim.html#L">L</a></span> (<span class="id"><a href="CDF.IMP.html#update">update</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> (<span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span>) <span class="id"><a href="CDF.Optim.html#s1">s1</a></span>) (<span class="id"><a href="CDF.IMP.html#update">update</a></span> (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>) (<span class="id"><a href="CDF.Optim.html#s2">s2</a></span> (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span>)) <span class="id"><a href="CDF.Optim.html#s2">s2</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof247')">Proof.</div>
+<div class="proofscript" id="proof247">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">agree</span>', <span class="id"><a href="CDF.IMP.html#update">update</a></span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> <span class="id">x</span> <span class="id">x0</span>); <span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x</span>) (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x0</span>)).<br/>
+- <span class="tactic">apply</span> <span class="id">H</span>. <span class="id">fsetdec</span>.<br/>
+- <span class="tactic">congruence</span>.<br/>
+- <span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> <span class="id">x0</span> <span class="id">y</span>).<br/>
+&nbsp;&nbsp;+ <span class="tactic">subst</span> <span class="id">x0</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="id">fsetdec</span>.<br/>
+&nbsp;&nbsp;+ <span class="id">exfalso</span>. <span class="tactic">apply</span> (<span class="id">H0</span> <span class="id">x0</span>); <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">H</span>. <span class="id">fsetdec</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">A special case of lemma <span class="bracket"><span class="id">agree</span>'<span class="id">_update_move</span></span> in the case where
+    <span class="bracket"><span class="id">f</span> <span class="id">x</span> = <span class="id">f</span> <span class="id">y</span></span>, that is, variables <span class="bracket"><span class="id">x</span></span> and <span class="bracket"><span class="id">y</span></span> are placed into
+    the same variable.  In this case, the assignment is replaced by <span class="bracket"><span class="id">SKIP</span></span>. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">agree</span>'<span class="id">_update_coalesced_move</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">L</span> <span class="id">x</span> <span class="id">y</span>,<br/>
+&nbsp;&nbsp;<span class="id">agree</span>' (<span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#remove">IdentSet.remove</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) (<span class="id"><a href="CDF.Optim.html#singleton">IdentSet.singleton</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span>)) <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#s2">s2</a></span> -&gt;<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">z</span>, <span class="id"><a href="CDF.Optim.html#In">IdentSet.In</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#z">z</a></span> &lt;&gt; <span class="id"><a href="CDF.Optim.html#x">x</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#z">z</a></span> &lt;&gt; <span class="id"><a href="CDF.Optim.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span> &lt;&gt; <span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> = <span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">agree</span>' <span class="id"><a href="CDF.Optim.html#L">L</a></span> (<span class="id"><a href="CDF.IMP.html#update">update</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> (<span class="id"><a href="CDF.Optim.html#s1">s1</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span>) <span class="id"><a href="CDF.Optim.html#s1">s1</a></span>) <span class="id"><a href="CDF.Optim.html#s2">s2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof248')">Proof.</div>
+<div class="proofscript" id="proof248">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">agree</span>', <span class="id"><a href="CDF.IMP.html#update">update</a></span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> <span class="id">x</span> <span class="id">x0</span>); <span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x</span>) (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x0</span>)).<br/>
+- <span class="tactic">rewrite</span> &lt;- <span class="id">e0</span>, <span class="id">H1</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="id">fsetdec</span>.<br/>
+- <span class="tactic">congruence</span>.<br/>
+- <span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> <span class="id">x0</span> <span class="id">y</span>).<br/>
+&nbsp;&nbsp;+ <span class="tactic">subst</span> <span class="id">x0</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="id">fsetdec</span>.<br/>
+&nbsp;&nbsp;+ <span class="id">exfalso</span>. <span class="tactic">apply</span> (<span class="id">H0</span> <span class="id">x0</span>); <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">H</span>. <span class="id">fsetdec</span>.<br/>
+Qed.</div>
+<br/>
+<h3> Semantic preservation </h3>
+<br/>
+<div class="doc">Grouping together all the non-interference conditions above,
+    we obtain a correctness criterion for the renaming <span class="bracket"><span class="id">f</span></span>.
+    If this Boolean-valued criterion evaluates to true,
+    the renaming is a correct register allocation. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="correct_allocation">correct_allocation</a></span> (<span class="id">c</span>: <span class="id"><a href="CDF.IMP.html#com">com</a></span>) (<span class="id">L</span>: <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span>) : <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#bool">bool</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id">x</span> <span class="id">a</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id"><a href="CDF.Optim.html#mem">IdentSet.mem</a></span> <span class="id">x</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="kwd">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#expr_is_var">expr_is_var</a></span> <span class="id">a</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> =&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#for_all">IdentSet.for_all</a></span> (<span class="kwd">fun</span> <span class="id">z</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#eqb">String.eqb</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span> <span class="id">x</span> || <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#negb">negb</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#eqb">String.eqb</a></span> (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span>) (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x</span>))) <span class="id"><a href="CDF.Optim.html#L">L</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">y</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#for_all">IdentSet.for_all</a></span> (<span class="kwd">fun</span> <span class="id">z</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#eqb">String.eqb</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span> <span class="id">x</span> || <span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#eqb">String.eqb</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span> <span class="id">y</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#negb">negb</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#eqb">String.eqb</a></span> (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span>) (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x</span>))) <span class="id"><a href="CDF.Optim.html#L">L</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SEQ">SEQ</a></span> <span class="id">c1</span> <span class="id">c2</span> =&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#correct_allocation">correct_allocation</a></span> <span class="id">c1</span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) &amp;&amp; <span class="id"><a href="CDF.Optim.html#correct_allocation">correct_allocation</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#correct_allocation">correct_allocation</a></span> <span class="id">c1</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> &amp;&amp; <span class="id"><a href="CDF.Optim.html#correct_allocation">correct_allocation</a></span> <span class="id">c2</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#correct_allocation">correct_allocation</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id"><a href="CDF.Optim.html#c">c</a></span>) <span class="id"><a href="CDF.Optim.html#L">L</a></span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">Under the assumption that the renaming <span class="bracket"><span class="id">f</span></span> satisfies <span class="bracket"><span class="id">correct_allocation</span></span>,
+    we prove semantic preservation for register allocation using
+    the same simulation diagram as for dead code elimination. </div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id"><a name="regalloc_correct_terminating">regalloc_correct_terminating</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">c</span> <span class="id">s</span>', <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.Optim.html#s">s</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="id">s</span>' -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">L</span> <span class="id">s1</span>,<br/>
+&nbsp;&nbsp;<span class="id">agree</span>' (<span class="id"><a href="CDF.Optim.html#live">live</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) <span class="id"><a href="CDF.Optim.html#s">s</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#correct_allocation">correct_allocation</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s1</span>', <span class="id"><a href="CDF.IMP.html#cexec">cexec</a></span> <span class="id"><a href="CDF.Optim.html#s1">s1</a></span> (<span class="id"><a href="CDF.Optim.html#regalloc">regalloc</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) <span class="id">s1</span>' /\ <span class="id">agree</span>' <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="id">s</span>' <span class="id">s1</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof249')">Proof.</div>
+<div class="proofscript" id="proof249">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span> <span class="id">L</span> <span class="id">s1</span> <span class="id">AG</span> <span class="id">CORR</span>.<br/>
+- <span class="comment">(*&nbsp;SKIP&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s1</span>; <span class="tactic">split</span>. <span class="id">constructor</span>. <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;ASSIGN&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> *. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Optim.html#mem">IdentSet.mem</a></span> <span class="id">x</span> <span class="id">L</span>) <span class="id">eqn</span>:<span class="id">is_live</span>.<br/>
+&nbsp;&nbsp;+ <span class="comment">(*&nbsp;x&nbsp;is&nbsp;live&nbsp;after&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Optim.html#expr_is_var">expr_is_var</a></span> <span class="id">a</span>) <span class="kwd">as</span> [<span class="id">y</span>|] <span class="id">eqn</span>:<span class="id">is_var</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;* <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#expr_is_var_correct">expr_is_var_correct</a></span> <span class="kwd">in</span> <span class="id">is_var</span>. <span class="tactic">subst</span> <span class="id">a</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">NONINTF</span>: <span class="kwd">forall</span> <span class="id">z</span>, <span class="id"><a href="CDF.Optim.html#In">IdentSet.In</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span> <span class="id">L</span> -&gt; <span class="id"><a href="CDF.Optim.html#z">z</a></span> &lt;&gt; <span class="id">x</span> -&gt; <span class="id"><a href="CDF.Optim.html#z">z</a></span> &lt;&gt; <span class="id">y</span> -&gt; <span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span> &lt;&gt; <span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#for_all_2">IdentSet.for_all_2</a></span> <span class="kwd">in</span> <span class="id">CORR</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">CORR</span> <span class="kwd">in</span> <span class="id">H</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#eqb_spec">String.eqb_spec</a></span> <span class="id">z</span> <span class="id">x</span>). <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#eqb_spec">String.eqb_spec</a></span> <span class="id">z</span> <span class="id">y</span>). <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#eqb_spec">String.eqb_spec</a></span> (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">z</span>) (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x</span>)). <span class="tactic">discriminate</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id">hnf</span>. <span class="tactic">intros</span>; <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x</span>) (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">y</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;** <span class="comment">(*&nbsp;assignment&nbsp;[x&nbsp;:=&nbsp;y]&nbsp;was&nbsp;eliminated&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_skip">cexec_skip</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">agree</span>'<span class="id">_update_coalesced_move</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;** <span class="comment">(*&nbsp;assignment&nbsp;[x&nbsp;:=&nbsp;y]&nbsp;was&nbsp;kept&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_assign">cexec_assign</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">agree</span>'<span class="id">_update_move</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;* <span class="comment">(*&nbsp;assignment&nbsp;[x&nbsp;:=&nbsp;a],&nbsp;general&nbsp;case&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">EVAL</span>: <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> <span class="id">a</span> <span class="id">s</span> = <span class="id"><a href="CDF.IMP.html#aeval">aeval</a></span> (<span class="id"><a href="CDF.Optim.html#rename_aexp">rename_aexp</a></span> <span class="id">a</span>) <span class="id">s1</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">by</span> (<span class="tactic">eapply</span> <span class="id">aeval_agree</span>'; <span class="tactic">eapply</span> <span class="id">agree</span>'<span class="id">_mon</span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">NONINTF</span>: <span class="kwd">forall</span> <span class="id">z</span>, <span class="id"><a href="CDF.Optim.html#In">IdentSet.In</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span> <span class="id">L</span> -&gt; <span class="id"><a href="CDF.Optim.html#z">z</a></span> &lt;&gt; <span class="id">x</span> -&gt; <span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span> &lt;&gt; <span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#for_all_2">IdentSet.for_all_2</a></span> <span class="kwd">in</span> <span class="id">CORR</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">CORR</span> <span class="kwd">in</span> <span class="id">H</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#eqb_spec">String.eqb_spec</a></span> <span class="id">z</span> <span class="id">x</span>). <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#eqb_spec">String.eqb_spec</a></span> (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">z</span>) (<span class="id"><a href="CDF.Optim.html#RENAMING.f">f</a></span> <span class="id">x</span>)). <span class="tactic">discriminate</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id">hnf</span>. <span class="tactic">intros</span>; <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_assign">cexec_assign</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">EVAL</span>. <span class="tactic">apply</span> <span class="id">agree</span>'<span class="id">_update_live</span>; <span class="tactic">auto</span>. <span class="tactic">eapply</span> <span class="id">agree</span>'<span class="id">_mon</span>; <span class="tactic">eauto</span>. <span class="id">fsetdec</span>.<br/>
+&nbsp;&nbsp;+ <span class="comment">(*&nbsp;x&nbsp;is&nbsp;live&nbsp;after&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_skip">cexec_skip</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">agree</span>'<span class="id">_update_dead</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">assert</span> (<span class="id"><a href="CDF.Optim.html#mem">IdentSet.mem</a></span> <span class="id">x</span> <span class="id">L</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span>) <span class="tactic">by</span> (<span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#mem_1">IdentSet.mem_1</a></span>; <span class="tactic">auto</span>). <span class="tactic">congruence</span>.<br/>
+- <span class="comment">(*&nbsp;SEQ&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> *. <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#andb_prop">andb_prop</a></span> <span class="kwd">in</span> <span class="id">CORR</span>; <span class="tactic">destruct</span> <span class="id">CORR</span> <span class="kwd">as</span> [<span class="id">CORR1</span> <span class="id">CORR2</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">IHcexec1</span> <span class="id">_</span> <span class="id">_</span> <span class="id">AG</span> <span class="id">CORR1</span>) <span class="kwd">as</span> (<span class="id">s1</span>' &amp; <span class="id">EXEC1</span> &amp; <span class="id">AG1</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">IHcexec2</span> <span class="id">_</span> <span class="id">_</span> <span class="id">AG1</span> <span class="id">CORR2</span>) <span class="kwd">as</span> (<span class="id">s2</span>' &amp; <span class="id">EXEC2</span> &amp; <span class="id">AG2</span>).<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s2</span>'; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_seq">cexec_seq</a></span> <span class="kwd">with</span> <span class="id">s1</span>'; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;IFTHENELSE&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> *. <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#andb_prop">andb_prop</a></span> <span class="kwd">in</span> <span class="id">CORR</span>; <span class="tactic">destruct</span> <span class="id">CORR</span> <span class="kwd">as</span> [<span class="id">CORR1</span> <span class="id">CORR2</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">EVAL</span>: <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span> = <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> (<span class="id"><a href="CDF.Optim.html#rename_bexp">rename_bexp</a></span> <span class="id">b</span>) <span class="id">s1</span>)<br/>
+&nbsp;&nbsp;<span class="tactic">by</span> (<span class="tactic">eapply</span> <span class="id">beval_agree</span>'; <span class="tactic">eapply</span> <span class="id">agree</span>'<span class="id">_mon</span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">IHcexec</span> <span class="id">L</span> <span class="id">s1</span>) <span class="kwd">as</span> (<span class="id">s1</span>' &amp; <span class="id">EXEC</span>' &amp; <span class="id">AG</span>').<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#agree_mon">agree_mon</a></span>; <span class="tactic">eauto</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>); <span class="id">fsetdec</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>); <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s1</span>'; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_ifthenelse">cexec_ifthenelse</a></span>. <span class="tactic">rewrite</span> &lt;- <span class="id">EVAL</span>. <span class="tactic">destruct</span> (<span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span>); <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;WHILE&nbsp;done&nbsp;*)</span><br/>
+<span class="kwd">Local</span> <span class="id">Opaque</span> <span class="id"><a href="CDF.Optim.html#live">live</a></span>.<br/>
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Optim.html#live_while_charact">live_while_charact</a></span> <span class="id">b</span> <span class="id">c</span> <span class="id">L</span>) <span class="kwd">as</span> (<span class="id">P</span> &amp; <span class="id">Q</span> &amp; <span class="id">R</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">EVAL</span>: <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span> = <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> (<span class="id"><a href="CDF.Optim.html#rename_bexp">rename_bexp</a></span> <span class="id">b</span>) <span class="id">s1</span>)<br/>
+&nbsp;&nbsp;<span class="tactic">by</span> (<span class="tactic">eapply</span> <span class="id">beval_agree</span>'; <span class="tactic">eapply</span> <span class="id">agree</span>'<span class="id">_mon</span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>).<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s1</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_while_done">cexec_while_done</a></span>. <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#agree_mon">agree_mon</a></span>; <span class="tactic">eauto</span>.<br/>
+- <span class="comment">(*&nbsp;WHILE&nbsp;loop&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Optim.html#live_while_charact">live_while_charact</a></span> <span class="id">b</span> <span class="id">c</span> <span class="id">L</span>) <span class="kwd">as</span> (<span class="id">P</span> &amp; <span class="id">Q</span> &amp; <span class="id">R</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">EVAL</span>: <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> <span class="id">b</span> <span class="id">s</span> = <span class="id"><a href="CDF.IMP.html#beval">beval</a></span> (<span class="id"><a href="CDF.Optim.html#rename_bexp">rename_bexp</a></span> <span class="id">b</span>) <span class="id">s1</span>)<br/>
+&nbsp;&nbsp;<span class="tactic">by</span> (<span class="tactic">eapply</span> <span class="id">beval_agree</span>'; <span class="tactic">eapply</span> <span class="id">agree</span>'<span class="id">_mon</span>; <span class="tactic">eauto</span>; <span class="id">fsetdec</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">IHcexec1</span> (<span class="id"><a href="CDF.Optim.html#live">live</a></span> (<span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span>) <span class="id">L</span>) <span class="id">s1</span>) <span class="kwd">as</span> (<span class="id">s1</span>' &amp; <span class="id">EXEC1</span> &amp; <span class="id">AG1</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="CDF.Optim.html#agree_mon">agree_mon</a></span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">IHcexec2</span> <span class="id">L</span> <span class="id">s1</span>') <span class="kwd">as</span> (<span class="id">s2</span>' &amp; <span class="id">EXEC2</span> &amp; <span class="id">AG2</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s2</span>'; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.IMP.html#cexec_while_loop">cexec_while_loop</a></span> <span class="kwd">with</span> <span class="id">s1</span>'; <span class="tactic">auto</span>. <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+<span class="kwd">Local</span> <span class="id">Transparent</span> <span class="id"><a href="CDF.Optim.html#live">live</a></span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id"><a href="CDF.Optim.html#RENAMING">RENAMING</a></span>.<br/>
+<br/>
+<h3> Examples </h3>
+<br/>
+<div class="doc">If the renaming is the identity function, register allocation behaves
+    just like dead code elimination. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="trivial_alloc">trivial_alloc</a></span> := <span class="kwd">fun</span> (<span class="id">x</span>: <span class="id"><a href="CDF.IMP.html#ident">ident</a></span>) =&gt; <span class="id"><a href="CDF.Optim.html#x">x</a></span>.<br/>
+<br/>
+<span class="kwd">Eval</span> <span class="tactic">compute</span> <span class="kwd">in</span> (<span class="id"><a href="CDF.Optim.html#correct_allocation">correct_allocation</a></span> <span class="id"><a href="CDF.Optim.html#trivial_alloc">trivial_alloc</a></span> <span class="id"><a href="CDF.IMP.html#Euclidean_division">Euclidean_division</a></span> (<span class="id"><a href="CDF.Optim.html#singleton">IdentSet.singleton</a></span> "<span class="id">r</span>")).<br/>
+<br/>
+<div class="doc">Result: <span class="bracket"><span class="id">true</span></span>. </div>
+<br/>
+<span class="kwd">Eval</span> <span class="tactic">compute</span> <span class="kwd">in</span> (<span class="id"><a href="CDF.Optim.html#regalloc">regalloc</a></span> <span class="id"><a href="CDF.Optim.html#trivial_alloc">trivial_alloc</a></span> <span class="id"><a href="CDF.IMP.html#Euclidean_division">Euclidean_division</a></span> (<span class="id"><a href="CDF.Optim.html#singleton">IdentSet.singleton</a></span> "<span class="id">r</span>")).<br/>
+<br/>
+<div class="doc">Result:
+<pre>
+   r := a;                 ===&gt;   r := a;
+   q := 0;                        skip;
+   while b &lt;= r do                while b &lt;= r do
+     r := r - b;                    r := r - b;
+     q := q + 1;                    skip;
+   done                           done</pre>
+</div>
+<br/>
+<div class="doc">Here is a nontrivial renaming that places variables "r" and "a" in
+    the same register "a". </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="my_alloc">my_alloc</a></span> := <span class="kwd">fun</span> (<span class="id">x</span>: <span class="id"><a href="CDF.IMP.html#ident">ident</a></span>) =&gt; <span class="kwd">if</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> "<span class="id">r</span>" <span class="kwd">then</span> "<span class="id">a</span>" <span class="kwd">else</span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>.<br/>
+<br/>
+<span class="kwd">Eval</span> <span class="tactic">compute</span> <span class="kwd">in</span> (<span class="id"><a href="CDF.Optim.html#correct_allocation">correct_allocation</a></span> <span class="id"><a href="CDF.Optim.html#my_alloc">my_alloc</a></span> <span class="id"><a href="CDF.IMP.html#Euclidean_division">Euclidean_division</a></span> (<span class="id"><a href="CDF.Optim.html#singleton">IdentSet.singleton</a></span> "<span class="id">r</span>")).<br/>
+<br/>
+<div class="doc">Result: <span class="bracket"><span class="id">true</span></span>. </div>
+<br/>
+<span class="kwd">Eval</span> <span class="tactic">compute</span> <span class="kwd">in</span> (<span class="id"><a href="CDF.Optim.html#regalloc">regalloc</a></span> <span class="id"><a href="CDF.Optim.html#my_alloc">my_alloc</a></span> <span class="id"><a href="CDF.IMP.html#Euclidean_division">Euclidean_division</a></span> (<span class="id"><a href="CDF.Optim.html#singleton">IdentSet.singleton</a></span> "<span class="id">r</span>")).<br/>
+<br/>
+<div class="doc">Here is the result of register allocation.
+    Note the elimination of the assignment <span class="bracket"><span class="id">r</span> := <span class="id">a</span></span>.
+<pre>
+   r := a;                 ===&gt;   skip;
+   q := 0;                        skip;
+   while b &lt;= r do                while b &lt;= a do
+     r := r - b;                    a := a - b;
+     q := q + 1;                    skip;
+   done                           done</pre>
+</div>
+<br/>
+<div class="doc">In contrast, if we try to place variables <span class="bracket"><span class="id">r</span></span> and <span class="bracket"><span class="id">b</span></span> in the same location,
+    the validation function <span class="bracket"><span class="id">correct_allocation</span></span> rejects the allocation. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="wrong_alloc">wrong_alloc</a></span> := <span class="kwd">fun</span> (<span class="id">x</span>: <span class="id"><a href="CDF.IMP.html#ident">ident</a></span>) =&gt; <span class="kwd">if</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html#string_dec">string_dec</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> "<span class="id">r</span>" <span class="kwd">then</span> "<span class="id">b</span>" <span class="kwd">else</span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>.<br/>
+<br/>
+<span class="kwd">Eval</span> <span class="tactic">compute</span> <span class="kwd">in</span> (<span class="id"><a href="CDF.Optim.html#correct_allocation">correct_allocation</a></span> <span class="id"><a href="CDF.Optim.html#my_alloc">my_alloc</a></span> <span class="id"><a href="CDF.IMP.html#Euclidean_division">Euclidean_division</a></span> (<span class="id"><a href="CDF.Optim.html#singleton">IdentSet.singleton</a></span> "<span class="id">r</span>")).<br/>
+<br/>
+<div class="doc">Result <span class="bracket"><span class="id">false</span></span>. </div>
+<br/>
+<h2> 3.4. Advanced topic: fixed points </h2>
+<br/>
+<div class="doc">The <span class="bracket"><span class="id">Fixpoints</span></span> library explains how to compute exact fixed points
+    (not approximate post-fixed points) using the Knaster-Tarsky theorem. </div>
+<br/>
+<span class="id">From</span> <span class="id">CDF</span> <span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="CDF.Fixpoints.html">Fixpoints</a></span>.<br/>
+<br/>
+<div class="doc">In this section, we apply this approach to liveness analysis. </div>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="FIXPOINT_FINITE_SETS">FIXPOINT_FINITE_SETS</a></span>.<br/>
+<br/>
+<div class="doc">First problem: the subset order between finite sets of variables
+    is not well founded!  For example, we have the following infinite,
+    strictly increasing sequence
+<pre>
+  {}, {"0"}, {"0","1"}, {"0","1","2"}, {"0","1","2","3"}, ...</pre>
+    Therefore, we must restrict ourselves to subsets of a finite
+    universe <span class="bracket"><span class="id">U</span></span> of variables, typically all the variables mentioned
+    in the program being analyzed.
+</div>
+<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="FIXPOINT_FINITE_SETS.U">U</a></span>: <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span>.<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="finset">finset</a></span> := { <span class="id">x</span>: <span class="id"><a href="CDF.Optim.html#t">IdentSet.t</a></span> | <span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#FIXPOINT_FINITE_SETS.U">U</a></span> }.<br/>
+<br/>
+<div class="doc">We equip the type <span class="bracket"><span class="id">finset</span></span> with the operations and the properties
+    expected in the <span class="bracket"><span class="id">Fixpoints</span></span> library. </div>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Definition</span> <span class="id"><a name="finset_eq">finset_eq</a></span> (<span class="id">x</span> <span class="id">y</span>: <span class="id"><a href="CDF.Optim.html#finset">finset</a></span>) := <span class="id"><a href="CDF.Optim.html#Equal">IdentSet.Equal</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span>.<br/>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Definition</span> <span class="id"><a name="finset_eq_dec">finset_eq_dec</a></span> (<span class="id">x</span> <span class="id">y</span>: <span class="id"><a href="CDF.Optim.html#finset">finset</a></span>) : {<span class="id"><a href="CDF.Optim.html#finset_eq">finset_eq</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span>} + {~<span class="id"><a href="CDF.Optim.html#finset_eq">finset_eq</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span>} :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#equal">IdentSet.equal</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span> <span class="kwd">with</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#left">left</a></span> <span class="id">_</span> | <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#right">right</a></span> <span class="id">_</span> <span class="kwd">end</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof250')">Next Obligation.</div>
+<div class="proofscript" id="proof250">
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#equal_2">IdentSet.equal_2</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof251')">Next Obligation.</div>
+<div class="proofscript" id="proof251">
+&nbsp;&nbsp;<span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#equal_1">IdentSet.equal_1</a></span> <span class="kwd">in</span> <span class="id">H</span>. <span class="tactic">congruence</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Definition</span> <span class="id"><a name="finset_le">finset_le</a></span> (<span class="id">x</span> <span class="id">y</span>: <span class="id"><a href="CDF.Optim.html#finset">finset</a></span>) := <span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="finset_le_trans">finset_le_trans</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span> <span class="id">z</span>, <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof252')">Proof.</div>
+<div class="proofscript" id="proof252">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">x</span> <span class="id">y</span> <span class="id">z</span>; <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#subset_trans">ISProp.subset_trans</a></span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="finset_eq_le">finset_eq_le</a></span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span>, <span class="id"><a href="CDF.Optim.html#finset_eq">finset_eq</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof253')">Proof.</div>
+<div class="proofscript" id="proof253">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#subset_equal">ISProp.subset_equal</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#equal_sym">ISProp.equal_sym</a></span>. <span class="tactic">apply</span> <span class="id">H</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Definition</span> <span class="id"><a name="finset_bot">finset_bot</a></span> : <span class="id"><a href="CDF.Optim.html#finset">finset</a></span> := <span class="id"><a href="CDF.Optim.html#empty">IdentSet.empty</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof254')">Next Obligation.</div>
+<div class="proofscript" id="proof254">
+&nbsp;&nbsp;<span class="id">fsetdec</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="finset_bot_smallest">finset_bot_smallest</a></span>: <span class="kwd">forall</span> <span class="id">x</span>, <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> <span class="id"><a href="CDF.Optim.html#finset_bot">finset_bot</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof255')">Proof.</div>
+<div class="proofscript" id="proof255">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="id">fsetdec</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">We must prove that the strict inclusion order is well founded.
+    To this end, we reason on the cardinals (numbers of elements)
+    of the sets of variables, which cannot exceed the cardinal
+    of the universe <span class="bracket"><span class="id">U</span></span>. </div>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Definition</span> <span class="id"><a name="finset_cardinal">finset_cardinal</a></span> (<span class="id">x</span>: <span class="id"><a href="CDF.Optim.html#finset">finset</a></span>) := <span class="id"><a href="CDF.Optim.html#cardinal">IdentSet.cardinal</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="finset_cardinal_max">finset_cardinal_max</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span>, (<span class="id"><a href="CDF.Optim.html#finset_cardinal">finset_cardinal</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> &lt;= <span class="id"><a href="CDF.Optim.html#cardinal">IdentSet.cardinal</a></span> <span class="id"><a href="CDF.Optim.html#FIXPOINT_FINITE_SETS.U">U</a></span>)%<span class="id">nat</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof256')">Proof.</div>
+<div class="proofscript" id="proof256">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#subset_cardinal">ISProp.subset_cardinal</a></span>. <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#proj2_sig">proj2_sig</a></span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="finset_cardinal_le">finset_cardinal_le</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span>, <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span> -&gt; (<span class="id"><a href="CDF.Optim.html#finset_cardinal">finset_cardinal</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> &lt;= <span class="id"><a href="CDF.Optim.html#finset_cardinal">finset_cardinal</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span>)%<span class="id">nat</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof257')">Proof.</div>
+<div class="proofscript" id="proof257">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#subset_cardinal">ISProp.subset_cardinal</a></span>. <span class="tactic">apply</span> <span class="id">H</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="finset_cardinal_lt">finset_cardinal_lt</a></span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span> -&gt; ~<span class="id"><a href="CDF.Optim.html#finset_eq">finset_eq</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span> -&gt; (<span class="id"><a href="CDF.Optim.html#finset_cardinal">finset_cardinal</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> &lt; <span class="id"><a href="CDF.Optim.html#finset_cardinal">finset_cardinal</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span>)%<span class="id">nat</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof258')">Proof.</div>
+<div class="proofscript" id="proof258">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Optim.html#choose">IdentSet.choose</a></span> (<span class="id"><a href="CDF.Optim.html#diff">IdentSet.diff</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#proj1_sig">proj1_sig</a></span> <span class="id">y</span>) (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#proj1_sig">proj1_sig</a></span> <span class="id">x</span>))) <span class="kwd">as</span> [<span class="id">elt</span>|] <span class="id">eqn</span>:<span class="id">CHOOSE</span>.<br/>
+- <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#choose_1">IdentSet.choose_1</a></span> <span class="kwd">in</span> <span class="id">CHOOSE</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#subset_cardinal_lt">ISProp.subset_cardinal_lt</a></span> <span class="kwd">with</span> <span class="id">elt</span>. <span class="tactic">auto</span>. <span class="id">fsetdec</span>. <span class="id">fsetdec</span>.<br/>
+- <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#choose_2">IdentSet.choose_2</a></span> <span class="kwd">in</span> <span class="id">CHOOSE</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> <span class="id">y</span> <span class="id">x</span>).<br/>
+&nbsp;&nbsp;{ <span class="tactic">intros</span> <span class="id">e</span> <span class="id">IN</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Optim.html#In_dec">ISProp.In_dec</a></span> <span class="id">e</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#proj1_sig">proj1_sig</a></span> <span class="id">x</span>)); <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">elim</span> (<span class="id">CHOOSE</span> <span class="id">e</span>). <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#diff_3">IdentSet.diff_3</a></span>; <span class="tactic">auto</span>. }<br/>
+&nbsp;&nbsp;<span class="tactic">elim</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#subset_antisym">ISProp.subset_antisym</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+&nbsp;<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="finset_gt_wf">finset_gt_wf</a></span>:<br/>
+&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#well_founded">well_founded</a></span> (<span class="kwd">fun</span> <span class="id">x</span> <span class="id">y</span> =&gt; <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> /\ ~<span class="id"><a href="CDF.Optim.html#finset_eq">finset_eq</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof259')">Proof.</div>
+<div class="proofscript" id="proof259">
+&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">M</span> := <span class="kwd">fun</span> <span class="id">x</span> =&gt; (<span class="id"><a href="CDF.Optim.html#cardinal">IdentSet.cardinal</a></span> <span class="id"><a href="CDF.Optim.html#FIXPOINT_FINITE_SETS.U">U</a></span> - <span class="id"><a href="CDF.Optim.html#finset_cardinal">finset_cardinal</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>)%<span class="id">nat</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Wellfounded.Inclusion.html#wf_incl">wf_incl</a></span> <span class="kwd">with</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Arith.Wf_nat.html#ltof">ltof</a></span> <span class="id">_</span> <span class="id">M</span>).<br/>
+- <span class="tactic">red</span>; <span class="tactic">intros</span> <span class="id">x</span> <span class="id">y</span> [<span class="id">L</span> <span class="id">E</span>]; <span class="tactic">red</span>. <span class="tactic">unfold</span> <span class="id">M</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id"><a href="CDF.Optim.html#finset_cardinal_max">finset_cardinal_max</a></span> <span class="id">x</span>), (<span class="id"><a href="CDF.Optim.html#finset_cardinal_max">finset_cardinal_max</a></span> <span class="id">y</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="CDF.Optim.html#finset_cardinal_lt">finset_cardinal_lt</a></span> <span class="id">y</span> <span class="id">x</span> <span class="id">L</span> <span class="id">E</span>); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">lia</span>.<br/>
+- <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Arith.Wf_nat.html#well_founded_ltof">well_founded_ltof</a></span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Now we can instantiate the fixed point computation provided by
+    the <span class="bracket"><span class="id">Fixpoints</span></span> library. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="monotone">monotone</a></span> (<span class="id">F</span>: <span class="id"><a href="CDF.Optim.html#finset">finset</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#finset">finset</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span>, <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> (<span class="id"><a href="CDF.Optim.html#F">F</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>) (<span class="id"><a href="CDF.Optim.html#F">F</a></span> <span class="id"><a href="CDF.Optim.html#y">y</a></span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="finset_fixpoint">finset_fixpoint</a></span> (<span class="id">F</span>: <span class="id"><a href="CDF.Optim.html#finset">finset</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#finset">finset</a></span>) (<span class="id">M</span>: <span class="id"><a href="CDF.Optim.html#monotone">monotone</a></span> <span class="id"><a href="CDF.Optim.html#F">F</a></span>) : <span class="id"><a href="CDF.Optim.html#finset">finset</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Fixpoints.html#fixpoint">fixpoint</a></span> <span class="id"><a href="CDF.Optim.html#finset">finset</a></span> <span class="id"><a href="CDF.Optim.html#finset_eq">finset_eq</a></span> <span class="id"><a href="CDF.Optim.html#finset_eq_dec">finset_eq_dec</a></span> <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> <span class="id"><a href="CDF.Optim.html#finset_gt_wf">finset_gt_wf</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#finset_bot">finset_bot</a></span> <span class="id"><a href="CDF.Optim.html#finset_bot_smallest">finset_bot_smallest</a></span> <span class="id"><a href="CDF.Optim.html#F">F</a></span> <span class="id"><a href="CDF.Optim.html#M">M</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="finset_fixpoint_eq">finset_fixpoint_eq</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">F</span> <span class="id">M</span>, <span class="id"><a href="CDF.Optim.html#finset_eq">finset_eq</a></span> (<span class="id"><a href="CDF.Optim.html#finset_fixpoint">finset_fixpoint</a></span> <span class="id"><a href="CDF.Optim.html#F">F</a></span> <span class="id"><a href="CDF.Optim.html#M">M</a></span>) (<span class="id"><a href="CDF.Optim.html#F">F</a></span> (<span class="id"><a href="CDF.Optim.html#finset_fixpoint">finset_fixpoint</a></span> <span class="id"><a href="CDF.Optim.html#F">F</a></span> <span class="id"><a href="CDF.Optim.html#M">M</a></span>)).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof260')">Proof.</div>
+<div class="proofscript" id="proof260">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id"><a href="CDF.Optim.html#finset_fixpoint">finset_fixpoint</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Fixpoints.html#fixpoint_eq">fixpoint_eq</a></span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="finset_fixpoint_smallest">finset_fixpoint_smallest</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">F</span> <span class="id">M</span> <span class="id">z</span>, <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> (<span class="id"><a href="CDF.Optim.html#F">F</a></span> <span class="id"><a href="CDF.Optim.html#z">z</a></span>) <span class="id"><a href="CDF.Optim.html#z">z</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> (<span class="id"><a href="CDF.Optim.html#finset_fixpoint">finset_fixpoint</a></span> <span class="id"><a href="CDF.Optim.html#F">F</a></span> <span class="id"><a href="CDF.Optim.html#M">M</a></span>) <span class="id"><a href="CDF.Optim.html#z">z</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof261')">Proof.</div>
+<div class="proofscript" id="proof261">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id"><a href="CDF.Optim.html#finset_fixpoint">finset_fixpoint</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Fixpoints.html#fixpoint_smallest">fixpoint_smallest</a></span>; <span class="tactic">eauto</span> <span class="kwd">using</span> <span class="id"><a href="CDF.Optim.html#finset_le_trans">finset_le_trans</a></span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="finset_fixpoint_mon">finset_fixpoint_mon</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">F1</span> <span class="id">M1</span> <span class="id">F2</span> <span class="id">M2</span>,<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">x</span>, <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> (<span class="id"><a href="CDF.Optim.html#F1">F1</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>) (<span class="id"><a href="CDF.Optim.html#F2">F2</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>)) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> (<span class="id"><a href="CDF.Optim.html#finset_fixpoint">finset_fixpoint</a></span> <span class="id"><a href="CDF.Optim.html#F1">F1</a></span> <span class="id"><a href="CDF.Optim.html#M1">M1</a></span>) (<span class="id"><a href="CDF.Optim.html#finset_fixpoint">finset_fixpoint</a></span> <span class="id"><a href="CDF.Optim.html#F2">F2</a></span> <span class="id"><a href="CDF.Optim.html#M2">M2</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof262')">Proof.</div>
+<div class="proofscript" id="proof262">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id"><a href="CDF.Optim.html#finset_fixpoint">finset_fixpoint</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Fixpoints.html#fixpoint_mon">fixpoint_mon</a></span>; <span class="tactic">eauto</span> <span class="kwd">using</span> <span class="id"><a href="CDF.Optim.html#finset_le_trans">finset_le_trans</a></span>, <span class="id"><a href="CDF.Optim.html#finset_eq_le">finset_eq_le</a></span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Let's try to redefine liveness analysis, using finite sets <span class="bracket"><span class="id">finset</span></span>
+    and fixed point computation <span class="bracket"><span class="id">finset_fixpoint</span></span>.
+</div>
+&nbsp;<br/>
+<span class="id">Fail</span> <span class="kwd">Fixpoint</span> <span class="id">live</span>' (<span class="id">c</span>: <span class="id"><a href="CDF.IMP.html#com">com</a></span>) (<span class="id">L</span>: <span class="id"><a href="CDF.Optim.html#finset">finset</a></span>) : <span class="id"><a href="CDF.Optim.html#finset">finset</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> =&gt; <span class="id"><a href="CDF.Optim.html#L">L</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id">x</span> <span class="id">a</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id"><a href="CDF.Optim.html#mem">IdentSet.mem</a></span> <span class="id">x</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">then</span> <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#remove">IdentSet.remove</a></span> <span class="id">x</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) (<span class="id"><a href="CDF.Optim.html#fv_aexp">fv_aexp</a></span> <span class="id">a</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SEQ">SEQ</a></span> <span class="id">c1</span> <span class="id">c2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">live</span>' <span class="id">c1</span> (<span class="id">live</span>' <span class="id">c2</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_bexp">fv_bexp</a></span> <span class="id">b</span>) (<span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id">live</span>' <span class="id">c1</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) (<span class="id">live</span>' <span class="id">c2</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>))<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">L</span>' := <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_bexp">fv_bexp</a></span> <span class="id">b</span>) <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#finset_fixpoint">finset_fixpoint</a></span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> <span class="id">L</span>' (<span class="id">live</span>' <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>)) <span class="id">_</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">First issue: when we take the union of <span class="bracket"><span class="id">L</span></span> with <span class="bracket"><span class="id">fv_aexp</span> <span class="id">a</span></span> or
+    <span class="bracket"><span class="id">fv_bexp</span> <span class="id">b</span></span>, nothing guarantees that we remain within the universe <span class="bracket"><span class="id">U</span></span>.
+    We must, then, add an hypothesis <span class="bracket"><span class="id">IdentSet.Subset</span> (<span class="id">fv_com</span> <span class="id">c</span>) <span class="id">U</span></span>
+    to guarantee that the program <span class="bracket"><span class="id">c</span></span> under analysis is "contained"
+    within universe <span class="bracket"><span class="id">U</span></span>.
+    Second issue: in order to use <span class="bracket"><span class="id">finset_fixpoint</span></span> in the <span class="bracket"><span class="id">WHILE</span></span> case,
+    we must provide <span class="bracket"><span class="id">finset_fixpoint</span></span> with a proof that its function
+    argument is monotonically increasing.  To this end, we must know
+    that <span class="bracket"><span class="id">live</span>' <span class="id">c</span></span> is a monotonically increasing function from
+    <span class="bracket"><span class="id">finset</span></span> to <span class="bracket"><span class="id">finset</span></span>, even though we are in the process of defining
+    the function <span class="bracket"><span class="id">live</span>'</span> !  Therefore, we must define <span class="bracket"><span class="id">live</span>'</span>
+    and at the same time prove that it is increasing.
+    Both issues can be solved by giving <span class="bracket"><span class="id">live</span>'</span> a rich dependent type:
+</div>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Fixpoint</span> <span class="id">live</span>' (<span class="id">c</span>: <span class="id"><a href="CDF.IMP.html#com">com</a></span>) (<span class="id">CONT</span>: <span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span> (<span class="id"><a href="CDF.Optim.html#fv_com">fv_com</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span>) <span class="id"><a href="CDF.Optim.html#FIXPOINT_FINITE_SETS.U">U</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: { <span class="id">f</span>: <span class="id"><a href="CDF.Optim.html#finset">finset</a></span> -&gt; <span class="id"><a href="CDF.Optim.html#finset">finset</a></span> | <span class="id"><a href="CDF.Optim.html#monotone">monotone</a></span> <span class="id"><a href="CDF.Optim.html#f">f</a></span> } :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SKIP">SKIP</a></span> =&gt; <span class="kwd">fun</span> <span class="id">L</span> =&gt; <span class="id"><a href="CDF.Optim.html#L">L</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#ASSIGN">ASSIGN</a></span> <span class="id">x</span> <span class="id">a</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">L</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id"><a href="CDF.Optim.html#mem">IdentSet.mem</a></span> <span class="id">x</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">then</span> <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#remove">IdentSet.remove</a></span> <span class="id">x</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) (<span class="id"><a href="CDF.Optim.html#fv_aexp">fv_aexp</a></span> <span class="id">a</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#SEQ">SEQ</a></span> <span class="id">c1</span> <span class="id">c2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">L</span> =&gt; <span class="id">live</span>' <span class="id">c1</span> <span class="id">_</span> (<span class="id">live</span>' <span class="id">c2</span> <span class="id">_</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>)<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#IFTHENELSE">IFTHENELSE</a></span> <span class="id">b</span> <span class="id">c1</span> <span class="id">c2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">L</span> =&gt; <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_bexp">fv_bexp</a></span> <span class="id">b</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id">live</span>' <span class="id">c1</span> <span class="id">_</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>) (<span class="id">live</span>' <span class="id">c2</span> <span class="id">_</span> <span class="id"><a href="CDF.Optim.html#L">L</a></span>))<br/>
+&nbsp;&nbsp;| <span class="id"><a href="CDF.IMP.html#WHILE">WHILE</a></span> <span class="id">b</span> <span class="id">c</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">L</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">L</span>' := <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> (<span class="id"><a href="CDF.Optim.html#fv_bexp">fv_bexp</a></span> <span class="id">b</span>) <span class="id"><a href="CDF.Optim.html#L">L</a></span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CDF.Optim.html#finset_fixpoint">finset_fixpoint</a></span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id"><a href="CDF.Optim.html#union">IdentSet.union</a></span> <span class="id">L</span>' (<span class="id">live</span>' <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="id">_</span> <span class="id"><a href="CDF.Optim.html#x">x</a></span>)) <span class="id">_</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof263')">Next Obligation.</div>
+<div class="proofscript" id="proof263">
+&nbsp;&nbsp;<span class="tactic">red</span>; <span class="tactic">auto</span>.<br/>
+Defined.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof264')">Next Obligation.</div>
+<div class="proofscript" id="proof264">
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> <span class="id">CONT</span>. <span class="tactic">generalize</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#proj2_sig">proj2_sig</a></span> <span class="id">L</span>). <span class="id">fsetdec</span>.<br/>
+Defined.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof265')">Next Obligation.</div>
+<div class="proofscript" id="proof265">
+&nbsp;&nbsp;<span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">rename</span> <span class="id">x0</span> <span class="id">into</span> <span class="id">L1</span>. <span class="tactic">rename</span> <span class="id">y</span> <span class="id">into</span> <span class="id">L2</span>. <span class="tactic">unfold</span> <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="CDF.Optim.html#mem">IdentSet.mem</a></span> <span class="id">x</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#proj1_sig">proj1_sig</a></span> <span class="id">L1</span>)) <span class="id">eqn</span>:<span class="id">M1</span>; <span class="id">cbn</span>.<br/>
+- <span class="tactic">replace</span> (<span class="id"><a href="CDF.Optim.html#mem">IdentSet.mem</a></span> <span class="id">x</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#proj1_sig">proj1_sig</a></span> <span class="id">L2</span>)) <span class="kwd">with</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span>. <br/>
+&nbsp;&nbsp;<span class="id">cbn</span>. <span class="id">fsetdec</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">symmetry</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#mem_1">IdentSet.mem_1</a></span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#mem_2">IdentSet.mem_2</a></span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">destruct</span> (<span class="id"><a href="CDF.Optim.html#mem">IdentSet.mem</a></span> <span class="id">x</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#proj1_sig">proj1_sig</a></span> <span class="id">L2</span>)) <span class="id">eqn</span>:<span class="id">M2</span>; <span class="id">cbn</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#mem_2">IdentSet.mem_2</a></span> <span class="kwd">in</span> <span class="id">M2</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#not_mem_iff">ISFact.not_mem_iff</a></span> <span class="kwd">in</span> <span class="id">M1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">red</span>; <span class="tactic">intros</span> <span class="id">z</span> <span class="id">IN</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#union_2">IdentSet.union_2</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#remove_2">IdentSet.remove_2</a></span>. <span class="tactic">congruence</span>. <span class="tactic">auto</span>.<br/>
+Defined.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof266')">Next Obligation.</div>
+<div class="proofscript" id="proof266">
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> <span class="id">CONT</span>; <span class="id">fsetdec</span>.<br/>
+Defined.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof267')">Next Obligation.</div>
+<div class="proofscript" id="proof267">
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> <span class="id">CONT</span>; <span class="id">fsetdec</span>.<br/>
+Defined.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof268')">Next Obligation.</div>
+<div class="proofscript" id="proof268">
+&nbsp;&nbsp;<span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">auto</span>.<br/>
+Defined.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof269')">Next Obligation.</div>
+<div class="proofscript" id="proof269">
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> <span class="id">CONT</span>; <span class="id">fsetdec</span>.<br/>
+Defined.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof270')">Next Obligation.</div>
+<div class="proofscript" id="proof270">
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> <span class="id">CONT</span>; <span class="id">fsetdec</span>.<br/>
+Defined.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof271')">Next Obligation.</div>
+<div class="proofscript" id="proof271">
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> <span class="id">CONT</span>. <span class="tactic">generalize</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#proj2_sig">proj2_sig</a></span> (<span class="id">x</span> <span class="id">L</span>)), (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#proj2_sig">proj2_sig</a></span> (<span class="id">x0</span> <span class="id">L</span>)); <span class="id">fsetdec</span>.<br/>
+Defined.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof272')">Next Obligation.</div>
+<div class="proofscript" id="proof272">
+&nbsp;&nbsp;<span class="tactic">red</span>; <span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span>; <span class="id">cbn</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">live</span>' <span class="id">c1</span>) <span class="kwd">as</span> [<span class="id">f1</span> <span class="id">M1</span>], (<span class="id">live</span>' <span class="id">c2</span>) <span class="kwd">as</span> [<span class="id">f2</span> <span class="id">M2</span>]. <span class="id">cbn</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#union_subset_5">ISProp.union_subset_5</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#union_s_m">ISProp.FM.union_s_m</a></span>. <span class="tactic">apply</span> <span class="id">M1</span>; <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id">M2</span>; <span class="tactic">auto</span>.<br/>
+Defined.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof273')">Next Obligation.</div>
+<div class="proofscript" id="proof273">
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> <span class="id">CONT</span>; <span class="id">fsetdec</span>.<br/>
+Defined.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof274')">Next Obligation.</div>
+<div class="proofscript" id="proof274">
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> <span class="id">CONT</span>. <span class="tactic">generalize</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#proj2_sig">proj2_sig</a></span> (<span class="id">x0</span> <span class="id">x</span>)) (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#proj2_sig">proj2_sig</a></span> <span class="id">L</span>). <span class="id">fsetdec</span>.<br/>
+Defined.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof275')">Next Obligation.</div>
+<div class="proofscript" id="proof275">
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> <span class="id">CONT</span>. <span class="tactic">red</span>; <span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span>; <span class="id">cbn</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">live</span>' <span class="id">c</span>) <span class="kwd">as</span> [<span class="id">f</span> <span class="id">M</span>]; <span class="id">cbn</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#union_subset_5">ISProp.union_subset_5</a></span>. <span class="tactic">apply</span> <span class="id">M</span>; <span class="tactic">auto</span>.<br/>
+Defined.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof276')">Next Obligation.</div>
+<div class="proofscript" id="proof276">
+&nbsp;&nbsp;<span class="id">cbn</span> <span class="kwd">in</span> <span class="id">CONT</span>. <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#finset_fixpoint_mon">finset_fixpoint_mon</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">z</span>; <span class="tactic">unfold</span> <span class="id"><a href="CDF.Optim.html#finset_le">finset_le</a></span>; <span class="id">cbn</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">live</span>' <span class="id">c</span>) <span class="kwd">as</span> [<span class="id">f</span> <span class="id">M</span>]; <span class="id">cbn</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#union_subset_4">ISProp.union_subset_4</a></span>. <span class="tactic">apply</span> <span class="id"><a href="CDF.Optim.html#union_subset_5">ISProp.union_subset_5</a></span>. <span class="tactic">auto</span>.<br/>
+Defined.</div>
+<br/>
+<div class="doc">At long last, we obtain the desired liveness analysis function. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">live</span>'' (<span class="id">c</span>: <span class="id"><a href="CDF.IMP.html#com">com</a></span>) (<span class="id">CONT</span>: <span class="id"><a href="CDF.Optim.html#Subset">IdentSet.Subset</a></span> (<span class="id"><a href="CDF.Optim.html#fv_com">fv_com</a></span> <span class="id"><a href="CDF.Optim.html#c">c</a></span>) <span class="id"><a href="CDF.Optim.html#FIXPOINT_FINITE_SETS.U">U</a></span>) (<span class="id">L</span>: <span class="id"><a href="CDF.Optim.html#finset">finset</a></span>) : <span class="id"><a href="CDF.Optim.html#finset">finset</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#proj1_sig">proj1_sig</a></span> (<span class="id">live</span>' <span class="id"><a href="CDF.Optim.html#c">c</a></span> <span class="id"><a href="CDF.Optim.html#CONT">CONT</a></span>) <span class="id"><a href="CDF.Optim.html#L">L</a></span>.<br/>
+<br/>
+<span class="kwd">End</span> <span class="id"><a href="CDF.Optim.html#FIXPOINT_FINITE_SETS">FIXPOINT_FINITE_SETS</a></span>.<br/>
+
+</div>
+<div class="footer"><hr/>Generated by <a href="https://github.com/xavierleroy/coq2html/">coq2html</a></div>
+</body>
+</html>
