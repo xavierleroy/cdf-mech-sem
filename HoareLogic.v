@@ -12,13 +12,14 @@ Local Open Scope Z_scope.
 (** We can verify the correctness of a program using nothing but an
     operational semantics for the language in which it is written.
     For example, here is an IMP program that exchanges the values of
-    two variables. *) Definition swap_xy := ASSIGN "t" (VAR "x");;
-    ASSIGN "x" (VAR "y");; ASSIGN "y" (VAR "t").
+    two variables. *) 
+
+Definition swap_xy :=
+    ASSIGN "t" (VAR "x");; ASSIGN "x" (VAR "y");; ASSIGN "y" (VAR "t").
 
 (** We can characterize the expected behavior of the program as
     follows: started in a store [s], the program always terminates, in
-    a store [s'] where ["x"] has value [s "y"] and ["y"] has value [s
-    "x"]. *)
+    a store [s'] where ["x"] has value [s "y"] and ["y"] has value [s "x"]. *)
 
 Lemma swap_xy_correct:
   forall s, exists s',
