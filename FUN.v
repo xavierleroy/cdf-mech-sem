@@ -66,7 +66,7 @@ Inductive red: term -> term -> Prop :=
       red a a' ->
       red (Cond a ifso ifnot) (Cond a' ifso ifnot).
 
-(** *** Exercise (1 step) *)
+(** *** Exercise (1 star) *)
 (** Modify [red] to obtain a call-by-name semantics.
     What is the impact of this change on the results in the remainder
     of this module? *)
@@ -556,7 +556,7 @@ Inductive has_type : context -> term -> type -> Prop :=
 
 where "E '⊢' a '∈' t" := (has_type E a t).
 
-(** *** Exercise (4 étoiles) *)
+(** *** Exercise (3 stars) *)
 (** Prove type soundness for this type system with subtyping.
     The proof in section 7.2 can be reused with very few changes.  
     However, it is necessary to use the following inversion lemmas. *)

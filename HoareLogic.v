@@ -629,7 +629,7 @@ Lemma Triple_while_lexico: forall P variant1 variant2 b c,
   (forall v1 v2,
     [[ P //\\ atrue b //\\ aequal variant1 v1 //\\ aequal variant2 v2 ]]
     c
-    [[ P //\\ (alessthan variant1 v1 \\// aequal variant1 v1 //\\ alessthan variant2 v2) ]])
+    [[ P //\\ (alessthan variant1 v1 \\// (aequal variant1 v1 //\\ alessthan variant2 v2)) ]])
   ->
     [[P]] WHILE b c [[P //\\ afalse b]].
 Proof.
