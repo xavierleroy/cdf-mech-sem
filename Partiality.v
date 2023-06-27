@@ -378,7 +378,7 @@ Proof.
       eapply bisim_both. apply CIH. apply eta_match_2.
     + rewrite ! run_Bind_Bind.
       eapply bisim_both. apply CIH.
-      apply eta_match_2 with (k0 := Kbind m0 k).
+      apply (eta_match_2 m (Kbind m0 k)).
 Qed.
 
 Lemma Mon_law_2:

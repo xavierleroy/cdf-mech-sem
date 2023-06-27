@@ -416,9 +416,10 @@ Qed.
 (** We put these lemmas in a "hint database" so that Coq can use them
     automatically. *)
 
-Hint Resolve code_at_head code_at_tail code_at_app_left code_at_app_right
-             code_at_app_right2 code_at_nil instr_at_code_at_nil: code.
-Hint Rewrite codelen_app codelen_cons Z.add_assoc Z.add_0_r : code.
+Global Hint Resolve
+   code_at_head code_at_tail code_at_app_left code_at_app_right
+   code_at_app_right2 code_at_nil instr_at_code_at_nil: code.
+Global Hint Rewrite codelen_app codelen_cons Z.add_assoc Z.add_0_r : code.
 
 (** Remember the informal specification we gave for the code generated
     for an arithmetic expression [a].  It should

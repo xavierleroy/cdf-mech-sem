@@ -54,7 +54,7 @@ Inductive lessdef {A: Type}: option A -> option A -> Prop :=
 
 Notation "x <<= y" := (lessdef x y) (at level 70, no associativity).
 
-Hint Constructors lessdef : lessdef.
+Local Hint Constructors lessdef : lessdef.
 
 Remark lessdef_refl: forall (A: Type) (x: option A), x <<= x.
 Proof.

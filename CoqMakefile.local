@@ -1,0 +1,1 @@
+COQEXTRAFLAGS= -w -notation-overridden -w -non-recursive
