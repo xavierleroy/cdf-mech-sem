@@ -684,7 +684,7 @@ Abort.
 (** Our first task is to relate configurations [(c, k, s)] of the small-step
     semantics with configurations [(C, pc, σ, s)] of the machine.
     We already know how to relate a command [c] with the machine code,
-    using the [codeseq_at] predicate.  What needs to be defined is a relation
+    using the [code_at] predicate.  What needs to be defined is a relation
     between the continuation [k] and the machine code.
 
     Intuitively, when the machine finishes executing the generated code for
