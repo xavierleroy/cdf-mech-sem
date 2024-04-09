@@ -641,33 +641,50 @@ Proof.
   (* FILL IN HERE *)
 Abort.
 
-(** *** Exercise (4 stars). *)
+(** *** Exercise (4 stars) *)
 
-(** Consider a loop with a simple test, such as [WHILE (LESSEQUAL a1 a2) c].
-    Currently, the compiled code executes two branch instructions per
-    iteration of the loop: one [Ible] to test the condition and one
-    [Ibranch] to go back to the beginning of the loop.  We can reduce
-    this to one [Ible] instruction per iteration, by putting the code
-    for [c] before the code for the test:
+(** Loop unrolling consists in executing several iterations of the loop
+    before jumping back to the beginning of the loop.
+    For example, unrolling the loop [WHILE b c] twice produces the
+    following pseudo machine code:
 <<
-     compile_com c ++ compile_bexp b delta1 0
+  Lloop:
+    if b then skip else goto Lexit
+    c
+    if b then skip else goto Lexit
+    c
+    goto Lloop
+  Lexit:
 >>
-    with [delta1] chosen so as to branch back to the beginning of
-    [compile_com c] when [b] is true.
+    This unrolled code executes as many [if b] tests as the code without
+    unrolling, but half as many backward jumps [goto Lloop].
+    Moreover, loop unrolling can enable more optimizations over the
+    loop body.
 
-    By itself, this would compile while loops like do-while loops, which is
-    incorrect.  On the first iteration, we must skip over the code for [c]
-    and branch to the code that tests [b]:
+    In this exercise, we consider unrolling all loops twice,
+    by replacing the [WHILE] case of function [compile_com] with
 <<
-    Ibranch (codesize(compile_com c)) :: compile_com c ++ compile_bexp b delta1 0
+  | WHILE b body =>
+      let code_body := compile_com body in
+      let len_body := codelen code_body in
+      let code_test2 := compile_bexp b 0 (len_body + 1) in
+      let len_test2 := codelen code_test2 in
+      let code_test1 := compile_bexp b 0 (len_body + len_test2 + len_body + 1) in
+      let len_test1 := codelen code_test1 in
+      code_test1
+      ++ code_body
+      ++ code_test2
+      ++ code_body
+      ++ Ibranch (- (len_test1 + len_body + len_test2 + len_body + 1)) :: nil
 >>
-    In this exercise, you should modify [compile_com] to implement this
-    alternate compilation schema for loops, then show its correctness
-    by updating the statement and proof of [compile_com_correct_terminating].
+    Prove the correctness of this compilation schema by updating
+    the statement and proof of [compile_com_correct_terminating].
+
     The difficulty (and the reason for the 4 stars) is that the hypothesis
     [code_at C pc (compile_com c)] no longer holds if [c] is a while loop
-    and we are at the second iteration of the loop.  You need to come up
-    with a more flexible way to relate the command [c] and the PC.
+    and we are at the second, fourth, sixth, etc, iteration of the
+    loop.  You need to come up with a more flexible way to relate the
+    command [c] and the PC.
 *)
 
 (** ** 2.5.  Correctness of generated code for commands, general case *)
